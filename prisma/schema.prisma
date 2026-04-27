@@ -1,0 +1,385 @@
+// Banilad Dental Clinic - Prisma schema (MongoDB)
+// MongoDB-specific conventions:
+//   - IDs use String + @map("_id") + @db.ObjectId
+//   - All FK fields are @db.ObjectId
+//   - No `onDelete: Cascade` on user-data relations (we soft-delete or block)
+//   - Schema sync: `prisma db push` (no migrations on MongoDB)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum Role {
+  ADMIN
+  DENTIST
+  RECEPTIONIST
+  PATIENT
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+  UNDISCLOSED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  PARTIAL
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  BANK_TRANSFER
+  INSURANCE
+  OTHER
+}
+
+enum ToothStatus {
+  HEALTHY
+  CARIES
+  RESTORED
+  MISSING
+  IMPLANT
+  CROWN
+  ROOT_CANAL
+  EXTRACTED
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum DocumentKind {
+  X_RAY
+  CONSENT
+  REFERRAL
+  OTHER
+}
+
+// ---------- Identity ----------
+
+model User {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
+  passwordHash String
+  role         Role
+  name         String
+  phone        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  patient  Patient?
+  dentist  Dentist?
+  staff    StaffProfile?
+  sessions Session[]
+
+  // Records authored by this user (for audit / FK back-references)
+  appointmentsCreated   Appointment[]      @relation("AppointmentCreatedBy")
+  paymentsRecorded      Payment[]          @relation("PaymentRecordedBy")
+  stockMovementsLogged  StockMovement[]    @relation("StockMovementRecordedBy")
+  documentsUploaded     Document[]         @relation("DocumentUploadedBy")
+  auditLogs             AuditLog[]
+
+  @@index([role])
+}
+
+model Session {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent String?
+  ip        String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ---------- Profile records (one-of per User by role) ----------
+
+model Patient {
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String    @unique @db.ObjectId
+  firstName             String
+  lastName              String
+  sex                   Sex
+  dateOfBirth           DateTime
+  phone                 String?
+  address               String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  medicalHistory        String?
+  allergies             String?
+  insuranceProvider     String?
+  insurancePolicyNo     String?
+  notes                 String?
+  deletedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id])
+  appointments    Appointment[]
+  treatments      TreatmentRecord[]
+  toothConditions ToothCondition[]
+  invoices        Invoice[]
+  documents       Document[]
+
+  @@index([lastName, firstName])
+  @@index([deletedAt])
+}
+
+model Dentist {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String  @unique @db.ObjectId
+  licenseNo String
+  specialty String?
+  bio       String?
+  // Working hours stored as { mon: { start, end }, tue: ..., ... } — Json for flexibility
+  workingHours Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id])
+  appointments Appointment[]
+  treatments   TreatmentRecord[]
+}
+
+model StaffProfile {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
+  position  String
+  hireDate  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// ---------- Clinical operations ----------
+
+model Appointment {
+  id          String            @id @default(auto()) @map("_id") @db.ObjectId
+  patientId   String            @db.ObjectId
+  dentistId   String            @db.ObjectId
+  startsAt    DateTime
+  endsAt      DateTime
+  status      AppointmentStatus @default(SCHEDULED)
+  reason      String?
+  notes       String?
+  createdById String            @db.ObjectId
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  patient   Patient           @relation(fields: [patientId], references: [id])
+  dentist   Dentist           @relation(fields: [dentistId], references: [id])
+  createdBy User              @relation("AppointmentCreatedBy", fields: [createdById], references: [id])
+  treatments TreatmentRecord[]
+  invoices   Invoice[]
+
+  @@index([dentistId, startsAt])
+  @@index([patientId, startsAt])
+  @@index([status])
+}
+
+model TreatmentRecord {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  patientId     String   @db.ObjectId
+  dentistId     String   @db.ObjectId
+  appointmentId String?  @db.ObjectId
+  procedure     String
+  diagnosis     String?
+  notes         String?
+  performedAt   DateTime @default(now())
+  feeCents      Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  patient     Patient                @relation(fields: [patientId], references: [id])
+  dentist     Dentist                @relation(fields: [dentistId], references: [id])
+  appointment Appointment?           @relation(fields: [appointmentId], references: [id])
+  toothEntries ToothTreatmentEntry[]
+
+  @@index([patientId, performedAt])
+  @@index([dentistId, performedAt])
+}
+
+model ToothTreatmentEntry {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  treatmentId String  @db.ObjectId
+  toothNumber Int     // FDI 11-48 (and 51-85 for primary if used later)
+  surface     String?
+  note        String?
+
+  treatment TreatmentRecord @relation(fields: [treatmentId], references: [id])
+
+  @@index([treatmentId])
+}
+
+model ToothCondition {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  patientId   String      @db.ObjectId
+  toothNumber Int
+  status      ToothStatus
+  note        String?
+  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime    @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@unique([patientId, toothNumber])
+}
+
+// ---------- Billing ----------
+
+model Invoice {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  patientId      String        @db.ObjectId
+  appointmentId  String?       @db.ObjectId
+  number         String        @unique
+  status         InvoiceStatus @default(DRAFT)
+  issuedAt       DateTime?
+  dueAt          DateTime?
+  subtotalCents  Int           @default(0)
+  discountCents  Int           @default(0)
+  taxCents       Int           @default(0)
+  totalCents     Int           @default(0)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  appointment Appointment?  @relation(fields: [appointmentId], references: [id])
+  items       InvoiceItem[]
+  payments    Payment[]
+
+  @@index([patientId, status])
+  @@index([status, dueAt])
+}
+
+model InvoiceItem {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId      String @db.ObjectId
+  description    String
+  quantity       Int    @default(1)
+  unitPriceCents Int    @default(0)
+  totalCents     Int    @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+}
+
+model Payment {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceId      String        @db.ObjectId
+  amountCents    Int
+  method         PaymentMethod
+  reference      String?
+  paidAt         DateTime      @default(now())
+  recordedById   String        @db.ObjectId
+
+  invoice    Invoice @relation(fields: [invoiceId], references: [id])
+  recordedBy User    @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([invoiceId])
+  @@index([paidAt])
+}
+
+// ---------- Inventory ----------
+
+model InventoryItem {
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  sku            String? @unique
+  unit           String
+  stockOnHand    Int     @default(0)
+  reorderPoint   Int     @default(0)
+  unitCostCents  Int     @default(0)
+  supplier       String?
+  notes          String?
+  isActive       Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  movements StockMovement[]
+
+  @@index([isActive])
+}
+
+model StockMovement {
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  itemId       String            @db.ObjectId
+  type         StockMovementType
+  // Quantity is stored as a positive number; sign is implied by `type`
+  quantity     Int
+  reason       String?
+  recordedById String            @db.ObjectId
+  recordedAt   DateTime          @default(now())
+
+  item       InventoryItem @relation(fields: [itemId], references: [id])
+  recordedBy User          @relation("StockMovementRecordedBy", fields: [recordedById], references: [id])
+
+  @@index([itemId, recordedAt])
+}
+
+// ---------- Documents ----------
+
+model Document {
+  id            String       @id @default(auto()) @map("_id") @db.ObjectId
+  patientId     String       @db.ObjectId
+  kind          DocumentKind @default(OTHER)
+  url           String
+  originalName  String
+  sizeBytes     Int          @default(0)
+  uploadedById  String       @db.ObjectId
+  uploadedAt    DateTime     @default(now())
+
+  patient    Patient @relation(fields: [patientId], references: [id])
+  uploadedBy User    @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([patientId, uploadedAt])
+}
+
+// ---------- Audit ----------
+
+model AuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  actorUserId String?  @db.ObjectId
+  action      String
+  entity      String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id])
+
+  @@index([actorUserId, createdAt])
+  @@index([entity, entityId])
+}
