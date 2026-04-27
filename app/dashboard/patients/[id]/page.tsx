@@ -64,7 +64,7 @@ export default async function PatientDetailPage({
 
   if (!patient) notFound();
 
-  const [appointments, conditionRows, treatmentRows, dentists, invoices] = await Promise.all([
+  const [appointments, conditionRows, treatmentRows, invoices] = await Promise.all([
     prisma.appointment.findMany({
       where: { patientId: id },
       orderBy: { startsAt: "desc" },
@@ -96,10 +96,6 @@ export default async function PatientDetailPage({
         dentist: { select: { user: { select: { name: true } } } },
         toothEntries: { select: { toothNumber: true } },
       },
-    }),
-    prisma.dentist.findMany({
-      orderBy: { user: { name: "asc" } },
-      select: { id: true, user: { select: { name: true } } },
     }),
     prisma.invoice.findMany({
       where: { patientId: id },
@@ -271,10 +267,7 @@ export default async function PatientDetailPage({
         <TabsContent value="treatments" className="mt-4">
           <TreatmentsTab
             patientId={patient.id}
-            patientName={fullName}
-            dentists={dentists.map((d) => ({ id: d.id, name: d.user.name }))}
             treatments={treatmentRowsForUI}
-            conditions={conditions}
           />
         </TabsContent>
 

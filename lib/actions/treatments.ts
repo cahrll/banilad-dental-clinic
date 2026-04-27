@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
@@ -89,7 +90,7 @@ export async function createTreatmentAction(
     return { ok: false, fieldErrors: { dentistId: ["Dentist not found."] } };
   }
 
-  const treatment = await prisma.treatmentRecord.create({
+  await prisma.treatmentRecord.create({
     data: {
       patientId: data.patientId,
       dentistId: data.dentistId,
@@ -110,6 +111,9 @@ export async function createTreatmentAction(
     select: { id: true },
   });
 
+  // From here on, the action redirects on success — anything that needs to
+  // happen before navigation must be above this line.
+
   // Optional: update each affected tooth's current condition.
   if (data.resultingStatus) {
     const status = data.resultingStatus as ToothStatus;
@@ -128,8 +132,9 @@ export async function createTreatmentAction(
   }
 
   revalidatePath(`/dashboard/patients/${data.patientId}`);
+  revalidatePath("/dashboard/treatments");
   revalidatePath("/portal/treatments");
-  return { ok: true, treatmentId: treatment.id };
+  redirect(`/dashboard/patients/${data.patientId}`);
 }
 
 // ----- Set a single tooth's current condition (without recording a treatment) -----
@@ -200,5 +205,7 @@ export async function deleteTreatmentAction(
   await prisma.treatmentRecord.delete({ where: { id: treatmentId } });
 
   revalidatePath(`/dashboard/patients/${t.patientId}`);
+  revalidatePath("/dashboard/treatments");
+  revalidatePath("/portal/treatments");
   return { ok: true };
 }
