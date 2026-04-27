@@ -116,7 +116,7 @@ export default async function TreatmentsListPage({
             </span>
             <p className="text-sm font-medium">No treatments found.</p>
             <p className="max-w-xs text-xs text-muted-foreground">
-              {query || dentistFilter || rangeKey !== "all"
+              {query || dentistFilter || rangeKey !== "90"
                 ? "Try clearing filters or widening the date range."
                 : "Click Record treatment to log one."}
             </p>

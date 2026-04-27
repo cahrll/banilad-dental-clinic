@@ -16,7 +16,11 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 
 const ICONS = {
   layout: LayoutDashboard,
@@ -43,26 +47,22 @@ export type NavItem = {
 export function SidebarNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-col gap-0.5">
+    <SidebarMenu>
       {items.map((item) => {
         const Icon = ICONS[item.icon];
         const active = isActive(pathname, item.href);
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            data-active={active}
-            className={cn(
-              "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-              "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
-            )}
-          >
-            <Icon className="size-4 shrink-0" aria-hidden />
-            <span className="truncate">{item.label}</span>
-          </Link>
+          <SidebarMenuItem key={item.href}>
+            <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+              <Link href={item.href}>
+                <Icon aria-hidden />
+                <span>{item.label}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         );
       })}
-    </nav>
+    </SidebarMenu>
   );
 }
 

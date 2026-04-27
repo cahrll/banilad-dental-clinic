@@ -1,9 +1,23 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
-import { Separator } from "@/components/ui/separator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { SidebarNav, type NavItem } from "@/components/app/sidebar-nav";
-import { LogoutButton } from "@/components/app/logout-button";
-import { RoleBadge } from "@/components/app/role-badge";
+import { SidebarUserMenu } from "@/components/app/sidebar-user-menu";
 import { requirePatient } from "@/lib/auth/guards";
 
 const navItems: NavItem[] = [
@@ -14,45 +28,69 @@ const navItems: NavItem[] = [
   { href: "/portal/profile", label: "Profile", icon: "profile" },
 ];
 
-export default async function PortalLayout({ children }: { children: React.ReactNode }) {
+export default async function PortalLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user } = await requirePatient();
 
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
+
   return (
-    <div className="flex flex-1 flex-col bg-muted/20">
-      <header className="flex h-14 items-center justify-between border-b bg-background px-4 md:px-8">
-        <Link href="/portal" className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
-            B
-          </span>
-          <div className="leading-tight">
-            <p className="text-sm font-semibold tracking-tight">Banilad Dental Clinic</p>
-            <p className="text-xs text-muted-foreground">Patient portal</p>
+    <SidebarProvider defaultOpen={defaultOpen}>
+      <Sidebar collapsible="icon">
+        <SidebarHeader>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild>
+                <Link href="/portal">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <span className="text-sm font-semibold">B</span>
+                  </div>
+                  <div className="grid flex-1 text-left leading-tight">
+                    <span className="truncate text-sm font-semibold">
+                      Banilad Dental
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      Patient portal
+                    </span>
+                  </div>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarNav items={navItems} />
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <SidebarUserMenu
+            name={user.name}
+            email={user.email}
+            role={user.role}
+          />
+        </SidebarFooter>
+        <SidebarRail />
+      </Sidebar>
+
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <span className="text-sm font-medium md:hidden">Patient portal</span>
           </div>
-        </Link>
-        <div className="flex items-center gap-3">
-          <div className="hidden text-right text-xs sm:block">
-            <p className="font-medium">{user.name}</p>
-            <p className="text-muted-foreground">{user.email}</p>
-          </div>
-          <RoleBadge role={user.role} />
-          <LogoutButton />
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">
+          <div className="mx-auto w-full max-w-4xl">{children}</div>
         </div>
-      </header>
-
-      <div className="flex flex-1">
-        <aside className="hidden w-56 shrink-0 border-r bg-background p-3 md:block">
-          <SidebarNav items={navItems} />
-        </aside>
-        <main className="flex-1 overflow-x-hidden">
-          <div className="mx-auto w-full max-w-4xl p-4 md:p-8">{children}</div>
-        </main>
-      </div>
-
-      <Separator />
-      <footer className="px-4 py-3 text-center text-xs text-muted-foreground md:px-8">
-        © {new Date().getFullYear()} Banilad Dental Clinic
-      </footer>
+      </SidebarInset>
       <Toaster richColors closeButton />
-    </div>
+    </SidebarProvider>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,6 +41,7 @@ export function RecordTreatmentForm({
   dentists: Array<{ id: string; name: string }>;
   conditions: ToothConditionMap;
 }) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(
     createTreatmentAction,
     initialTreatmentFormState,
@@ -179,8 +180,13 @@ export function RecordTreatmentForm({
       </FieldGroup>
 
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button asChild variant="outline" disabled={pending}>
-          <Link href={`/dashboard/patients/${patientId}`}>Cancel</Link>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={() => router.push(`/dashboard/patients/${patientId}`)}
+        >
+          Cancel
         </Button>
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save treatment"}
