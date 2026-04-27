@@ -28,9 +28,12 @@ export type CalendarAppointment = {
   dentistName: string;
 };
 
-const HOUR_HEIGHT_PX = 56; // each hour row
+const HOUR_HEIGHT_PX = 72; // each hour row — sized for 2-3 lines of card text
 const SLOT_MINUTES = 60;
 const TOTAL_HOURS = CALENDAR_DAY_END_HOUR - CALENDAR_DAY_START_HOUR;
+// Below this rendered card height, only the patient name is shown so short
+// slots (e.g. 15 min) don't render clipped/garbled secondary text.
+const COMPACT_BLOCK_THRESHOLD_PX = 44;
 
 export function WeekGrid({
   days,
@@ -135,7 +138,9 @@ function AppointmentBlock({
     (start.getHours() - CALENDAR_DAY_START_HOUR) * 60 + start.getMinutes();
   const durationMinutes = Math.max(15, (end.getTime() - start.getTime()) / 60000);
   const top = (startMinutes / SLOT_MINUTES) * HOUR_HEIGHT_PX;
-  const height = (durationMinutes / SLOT_MINUTES) * HOUR_HEIGHT_PX;
+  const rawHeight = (durationMinutes / SLOT_MINUTES) * HOUR_HEIGHT_PX;
+  const renderedHeight = Math.max(28, rawHeight - 2);
+  const compact = renderedHeight < COMPACT_BLOCK_THRESHOLD_PX;
 
   const tone = blockTone(appointment.status);
 
@@ -144,18 +149,20 @@ function AppointmentBlock({
       type="button"
       onClick={onClick}
       className={cn(
-        "absolute inset-x-1 overflow-hidden rounded-md border px-2 py-1 text-left text-xs shadow-sm transition-colors",
+        "absolute inset-x-1 overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs leading-tight shadow-sm transition-colors",
         tone,
       )}
-      style={{ top, height: Math.max(28, height - 2) }}
+      style={{ top, height: renderedHeight }}
       aria-label={`${appointment.patientName} with ${appointment.dentistName} at ${formatTime(start)}`}
     >
-      <p className="truncate font-medium">{appointment.patientName}</p>
-      <p className="truncate text-[10px] opacity-80">
-        {formatTime(start)} · {appointment.dentistName}
-      </p>
-      {appointment.status !== "SCHEDULED" ? (
-        <p className="mt-0.5 truncate text-[10px] uppercase opacity-80">
+      <p className="truncate font-medium leading-tight">{appointment.patientName}</p>
+      {!compact ? (
+        <p className="truncate text-[10px] leading-tight opacity-80">
+          {formatTime(start)} · {appointment.dentistName}
+        </p>
+      ) : null}
+      {!compact && appointment.status !== "SCHEDULED" ? (
+        <p className="mt-0.5 truncate text-[10px] uppercase leading-tight opacity-80">
           {APPOINTMENT_STATUS_LABELS[appointment.status]}
         </p>
       ) : null}
