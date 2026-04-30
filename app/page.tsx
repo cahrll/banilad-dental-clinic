@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ModeToggle } from "@/components/app/mode-toggle";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { homePathForRole } from "@/lib/auth/roles";
 
@@ -22,7 +23,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex items-center justify-between border-b bg-background/80 px-6 py-4 backdrop-blur">
+      <header className="flex items-center justify-between border-b bg-background px-6 py-4">
         <Link href="/" className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
             B
@@ -32,6 +33,7 @@ export default async function Home() {
           </span>
         </Link>
         <div className="flex items-center gap-2">
+          <ModeToggle />
           {session ? (
             <Button asChild>
               <Link href={homePathForRole(session.user.role)}>

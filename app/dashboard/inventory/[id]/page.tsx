@@ -29,9 +29,9 @@ const MOVEMENT_LABEL: Record<string, string> = {
 };
 
 const MOVEMENT_TONE: Record<string, string> = {
-  IN: "text-emerald-700 dark:text-emerald-400",
-  OUT: "text-rose-700 dark:text-rose-400",
-  ADJUSTMENT: "text-amber-700 dark:text-amber-400",
+  IN: "text-success",
+  OUT: "text-destructive",
+  ADJUSTMENT: "text-warning",
 };
 
 export default async function InventoryItemDetailPage({
@@ -104,11 +104,11 @@ export default async function InventoryItemDetailPage({
       />
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className={low ? "border-amber-300 bg-amber-50/50 dark:border-amber-900/60 dark:bg-amber-950/20" : ""}>
+        <Card className={low ? "border-warning/40 bg-warning/5" : ""}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               Stock on hand
-              {low ? <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" aria-hidden /> : null}
+              {low ? <AlertTriangle className="size-4 text-warning" aria-hidden /> : null}
             </CardTitle>
           </CardHeader>
           <CardContent>

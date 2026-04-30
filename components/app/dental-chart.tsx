@@ -5,9 +5,8 @@ import { cn } from "@/lib/utils";
 import {
   LOWER_LEFT,
   LOWER_RIGHT,
-  TOOTH_STATUS_DOTS,
+  TOOTH_STATUS_DOT_VAR,
   TOOTH_STATUS_LABELS,
-  TOOTH_STATUS_TONES,
   UPPER_LEFT,
   UPPER_RIGHT,
   type ToothConditionMap,
@@ -115,25 +114,31 @@ function ToothButton({
   mode: DentalChartMode;
   onClick: () => void;
 }) {
-  const tone = status ? TOOTH_STATUS_TONES[status] : "bg-background hover:bg-muted border-border";
-  const dot = status ? TOOTH_STATUS_DOTS[status] : "bg-zinc-300";
+  const dotColor = status
+    ? TOOTH_STATUS_DOT_VAR[status]
+    : "var(--muted-foreground)";
   return (
     <button
       type="button"
       onClick={onClick}
+      data-tooth-status={status ?? undefined}
       data-selected={selected || undefined}
       title={status ? `${tooth} · ${TOOTH_STATUS_LABELS[status]}` : `${tooth} · No condition recorded`}
       className={cn(
         "relative flex flex-col items-center justify-center gap-0.5 rounded-md border px-1.5 py-1.5 text-[11px] font-medium transition-all",
         "min-w-[36px]",
-        tone,
+        !status && "bg-background text-foreground hover:bg-muted border-border",
         mode === "select" && "cursor-pointer",
         "hover:-translate-y-0.5 hover:shadow-sm",
         "data-[selected=true]:ring-2 data-[selected=true]:ring-primary data-[selected=true]:ring-offset-1",
       )}
     >
       <span className="leading-none">{tooth}</span>
-      <span className={cn("size-1.5 rounded-full", dot)} aria-hidden />
+      <span
+        className="size-1.5 rounded-full"
+        style={{ backgroundColor: dotColor }}
+        aria-hidden
+      />
     </button>
   );
 }
@@ -143,7 +148,11 @@ function Legend() {
     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
       {Object.entries(TOOTH_STATUS_LABELS).map(([key, label]) => (
         <span key={key} className="inline-flex items-center gap-1.5">
-          <span className={cn("size-2 rounded-full", TOOTH_STATUS_DOTS[key as ToothStatus])} aria-hidden />
+          <span
+            className="size-2 rounded-full"
+            style={{ backgroundColor: TOOTH_STATUS_DOT_VAR[key as ToothStatus] }}
+            aria-hidden
+          />
           {label}
         </span>
       ))}

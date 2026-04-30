@@ -105,7 +105,7 @@ export default async function AppointmentsPage({
         </div>
       </div>
 
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden p-0 gap-0">
         <WeekGrid
           days={days}
           appointments={appointments.map((a) => ({

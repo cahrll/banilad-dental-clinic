@@ -173,15 +173,15 @@ function AppointmentBlock({
 function blockTone(status: AppointmentStatus): string {
   switch (status) {
     case "SCHEDULED":
-      return "border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-100";
+      return "border-warning/40 bg-warning/15 text-warning hover:bg-warning/25";
     case "CONFIRMED":
-      return "border-blue-300 bg-blue-100 text-blue-950 hover:bg-blue-200 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-100";
+      return "border-info/40 bg-info/15 text-info hover:bg-info/25";
     case "COMPLETED":
-      return "border-emerald-300 bg-emerald-100 text-emerald-950 hover:bg-emerald-200 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100";
+      return "border-success/40 bg-success/15 text-success hover:bg-success/25";
     case "CANCELLED":
-      return "border-zinc-300 bg-zinc-100 text-zinc-600 line-through hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400";
+      return "border-border bg-muted text-muted-foreground line-through hover:bg-muted/80";
     case "NO_SHOW":
-      return "border-rose-300 bg-rose-100 text-rose-950 hover:bg-rose-200 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-100";
+      return "border-destructive/40 bg-destructive/15 text-destructive hover:bg-destructive/25";
   }
 }
 

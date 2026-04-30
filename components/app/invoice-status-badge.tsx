@@ -11,11 +11,11 @@ const labels: Record<InvoiceStatus, string> = {
 };
 
 const tones: Record<InvoiceStatus, string> = {
-  DRAFT: "border-zinc-300 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
-  ISSUED: "border-blue-300 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200",
-  PAID: "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
-  PARTIAL: "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-  VOID: "border-zinc-300 bg-zinc-100 text-zinc-500 line-through dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500",
+  DRAFT: "border-border bg-muted text-muted-foreground",
+  ISSUED: "border-info/40 bg-info/10 text-info",
+  PAID: "border-success/40 bg-success/10 text-success",
+  PARTIAL: "border-warning/40 bg-warning/10 text-warning",
+  VOID: "border-border bg-muted text-muted-foreground line-through",
 };
 
 export function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {

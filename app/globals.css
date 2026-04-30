@@ -27,6 +27,13 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -46,75 +53,152 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --shadow-low: 0 1px 2px 0 oklch(0 0 0 / 0.04);
+  --shadow-mid: 0 4px 12px -2px oklch(0 0 0 / 0.08),
+    0 2px 4px -2px oklch(0 0 0 / 0.04);
+  --shadow-high: 0 12px 32px -8px oklch(0 0 0 / 0.18),
+    0 4px 8px -4px oklch(0 0 0 / 0.08);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Neutrals (cool gray, ~hue 247) — light mode reads top-down */
+  --background: oklch(0.985 0.002 247);
+  --foreground: oklch(0.18 0.012 247);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.18 0.012 247);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.18 0.012 247);
+
+  /* Brand accent — teal (hue ~195) */
+  --primary: oklch(0.58 0.115 195);
+  --primary-foreground: oklch(0.99 0 0);
+
+  --secondary: oklch(0.965 0.003 247);
+  --secondary-foreground: oklch(0.25 0.012 247);
+
+  --muted: oklch(0.965 0.003 247);
+  --muted-foreground: oklch(0.508 0.012 247);
+
+  /* `accent` is a hover/surface tone in shadcn, not the brand accent */
+  --accent: oklch(0.965 0.003 247);
+  --accent-foreground: oklch(0.25 0.012 247);
+
+  /* Status colors — hue-matched dark variants for text-on-soft-bg use */
+  --destructive: oklch(0.55 0.20 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.50 0.13 155);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.52 0.13 75);
+  --warning-foreground: oklch(0.99 0 0);
+  --info: oklch(0.55 0.14 245);
+  --info-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.918 0.005 247);
+  --input: oklch(0.918 0.005 247);
+  --ring: oklch(0.58 0.115 195);
+
+  /* Charts: brand accent + supporting hues, mode-tuned */
+  --chart-1: oklch(0.58 0.115 195);
+  --chart-2: oklch(0.62 0.14 245);
+  --chart-3: oklch(0.65 0.14 290);
+  --chart-4: oklch(0.70 0.15 75);
+  --chart-5: oklch(0.62 0.14 155);
+
+  --radius: 0.5rem;
+
+  /* Tooth condition tokens — dental chart uses these via data-status */
+  --tooth-healthy: oklch(0.62 0.14 155);
+  --tooth-healthy-soft: oklch(0.94 0.05 155);
+  --tooth-caries: oklch(0.72 0.16 75);
+  --tooth-caries-soft: oklch(0.95 0.06 85);
+  --tooth-restored: oklch(0.62 0.14 245);
+  --tooth-restored-soft: oklch(0.94 0.05 245);
+  --tooth-missing: oklch(0.72 0.005 247);
+  --tooth-missing-soft: oklch(0.94 0.003 247);
+  --tooth-implant: oklch(0.65 0.14 290);
+  --tooth-implant-soft: oklch(0.94 0.05 290);
+  --tooth-crown: oklch(0.72 0.14 90);
+  --tooth-crown-soft: oklch(0.95 0.06 95);
+  --tooth-root_canal: oklch(0.60 0.18 25);
+  --tooth-root_canal-soft: oklch(0.94 0.05 25);
+  --tooth-extracted: oklch(0.55 0.005 247);
+  --tooth-extracted-soft: oklch(0.92 0.003 247);
+
+  --sidebar: oklch(0.985 0.002 247);
+  --sidebar-foreground: oklch(0.18 0.012 247);
+  --sidebar-primary: oklch(0.58 0.115 195);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.95 0.005 247);
+  --sidebar-accent-foreground: oklch(0.25 0.012 247);
+  --sidebar-border: oklch(0.918 0.005 247);
+  --sidebar-ring: oklch(0.58 0.115 195);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.18 0.010 247);
+  --foreground: oklch(0.97 0.003 247);
+  --card: oklch(0.235 0.010 247);
+  --card-foreground: oklch(0.97 0.003 247);
+  --popover: oklch(0.235 0.010 247);
+  --popover-foreground: oklch(0.97 0.003 247);
+
+  /* Lighter teal for dark surfaces — passes AA on neutral-900 */
+  --primary: oklch(0.74 0.110 195);
+  --primary-foreground: oklch(0.15 0.015 195);
+
+  --secondary: oklch(0.27 0.010 247);
+  --secondary-foreground: oklch(0.97 0.003 247);
+
+  --muted: oklch(0.27 0.010 247);
+  --muted-foreground: oklch(0.72 0.008 247);
+
+  --accent: oklch(0.27 0.010 247);
+  --accent-foreground: oklch(0.97 0.003 247);
+
+  --destructive: oklch(0.74 0.16 25);
+  --destructive-foreground: oklch(0.16 0.04 25);
+  --success: oklch(0.78 0.12 155);
+  --success-foreground: oklch(0.16 0.04 155);
+  --warning: oklch(0.82 0.14 85);
+  --warning-foreground: oklch(0.18 0.04 75);
+  --info: oklch(0.76 0.13 245);
+  --info-foreground: oklch(0.15 0.04 245);
+
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.74 0.110 195);
+
+  --chart-1: oklch(0.74 0.110 195);
+  --chart-2: oklch(0.76 0.13 245);
+  --chart-3: oklch(0.78 0.13 290);
+  --chart-4: oklch(0.82 0.14 85);
+  --chart-5: oklch(0.78 0.12 155);
+
+  --tooth-healthy: oklch(0.74 0.13 155);
+  --tooth-healthy-soft: oklch(0.30 0.06 155);
+  --tooth-caries: oklch(0.80 0.15 75);
+  --tooth-caries-soft: oklch(0.32 0.07 75);
+  --tooth-restored: oklch(0.74 0.13 245);
+  --tooth-restored-soft: oklch(0.30 0.06 245);
+  --tooth-missing: oklch(0.55 0.005 247);
+  --tooth-missing-soft: oklch(0.27 0.005 247);
+  --tooth-implant: oklch(0.76 0.13 290);
+  --tooth-implant-soft: oklch(0.30 0.06 290);
+  --tooth-crown: oklch(0.80 0.13 90);
+  --tooth-crown-soft: oklch(0.32 0.06 90);
+  --tooth-root_canal: oklch(0.70 0.18 25);
+  --tooth-root_canal-soft: oklch(0.30 0.07 25);
+  --tooth-extracted: oklch(0.50 0.005 247);
+  --tooth-extracted-soft: oklch(0.25 0.005 247);
+
+  --sidebar: oklch(0.145 0.010 247);
+  --sidebar-foreground: oklch(0.97 0.003 247);
+  --sidebar-primary: oklch(0.74 0.110 195);
+  --sidebar-primary-foreground: oklch(0.15 0.015 195);
+  --sidebar-accent: oklch(0.235 0.010 247);
+  --sidebar-accent-foreground: oklch(0.97 0.003 247);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.74 0.110 195);
 }
 
 @layer base {
@@ -122,9 +206,84 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground text-sm;
+    font-feature-settings: "cv11", "ss01";
   }
   html {
     @apply font-sans;
+  }
+  /* Numeric tabular figures on tables, money, calendar times */
+  [data-slot="table-cell"],
+  [data-slot="table-head"],
+  [data-tabular] {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Tooth condition tones — driven by data-status on the chart buttons */
+  [data-tooth-status="HEALTHY"] {
+    background-color: var(--tooth-healthy-soft);
+    color: var(--tooth-healthy);
+    border-color: color-mix(in oklch, var(--tooth-healthy) 35%, transparent);
+  }
+  [data-tooth-status="CARIES"] {
+    background-color: var(--tooth-caries-soft);
+    color: var(--tooth-caries);
+    border-color: color-mix(in oklch, var(--tooth-caries) 35%, transparent);
+  }
+  [data-tooth-status="RESTORED"] {
+    background-color: var(--tooth-restored-soft);
+    color: var(--tooth-restored);
+    border-color: color-mix(in oklch, var(--tooth-restored) 35%, transparent);
+  }
+  [data-tooth-status="MISSING"] {
+    background-color: var(--tooth-missing-soft);
+    color: var(--tooth-missing);
+    border-color: color-mix(in oklch, var(--tooth-missing) 35%, transparent);
+    text-decoration: line-through;
+  }
+  [data-tooth-status="IMPLANT"] {
+    background-color: var(--tooth-implant-soft);
+    color: var(--tooth-implant);
+    border-color: color-mix(in oklch, var(--tooth-implant) 35%, transparent);
+  }
+  [data-tooth-status="CROWN"] {
+    background-color: var(--tooth-crown-soft);
+    color: var(--tooth-crown);
+    border-color: color-mix(in oklch, var(--tooth-crown) 35%, transparent);
+  }
+  [data-tooth-status="ROOT_CANAL"] {
+    background-color: var(--tooth-root_canal-soft);
+    color: var(--tooth-root_canal);
+    border-color: color-mix(in oklch, var(--tooth-root_canal) 35%, transparent);
+  }
+  [data-tooth-status="EXTRACTED"] {
+    background-color: var(--tooth-extracted-soft);
+    color: var(--tooth-extracted);
+    border-color: color-mix(in oklch, var(--tooth-extracted) 35%, transparent);
+    text-decoration: line-through;
+  }
+}
+
+/* Print: always render light tokens regardless of selected theme */
+@media print {
+  :root,
+  .dark {
+    --background: #ffffff;
+    --foreground: #000000;
+    --card: #ffffff;
+    --card-foreground: #000000;
+    --popover: #ffffff;
+    --popover-foreground: #000000;
+    --muted: #f5f5f5;
+    --muted-foreground: #444444;
+    --border: #d4d4d4;
+    --input: #d4d4d4;
+    --primary: #000000;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f5;
+    --secondary-foreground: #000000;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
   }
 }

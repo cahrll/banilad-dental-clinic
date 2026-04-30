@@ -241,7 +241,7 @@ function KpiCard({
         <span
           className={
             tone === "warning"
-              ? "grid size-9 place-items-center rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              ? "grid size-9 place-items-center rounded-md bg-warning/10 text-warning"
               : "grid size-9 place-items-center rounded-md bg-primary/10 text-primary"
           }
         >
