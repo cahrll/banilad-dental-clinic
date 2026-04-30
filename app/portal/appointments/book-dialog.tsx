@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
-import { addDays, addMinutes, setHours, setMinutes, startOfDay } from "date-fns";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,9 +27,15 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import {
+  BookingPicker,
+  type BookingSelection,
+} from "@/components/app/booking-picker";
 import { isoDatetimeLocal } from "@/lib/datetime";
 import { initialAppointmentFormState, toFieldErrors } from "@/lib/auth/form-state";
 import { patientBookAppointmentAction } from "@/lib/actions/appointments";
+
+const PATIENT_DURATION_MINUTES = 30;
 
 export function PatientBookDialog({
   open,
@@ -46,22 +51,35 @@ export function PatientBookDialog({
     initialAppointmentFormState,
   );
 
-  const [start, setStart] = useState(() =>
-    isoDatetimeLocal(setMinutes(setHours(startOfDay(addDays(new Date(), 1)), 9), 0)),
-  );
-  const [end, setEnd] = useState(() => isoDatetimeLocal(addMinutes(new Date(start), 30)));
+  const [dentistId, setDentistId] = useState<string | undefined>(undefined);
+  const [selection, setSelection] = useState<BookingSelection | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const chosenDentists = useMemo(() => {
+    if (!dentistId) return [];
+    const found = dentists.find((d) => d.id === dentistId);
+    return found ? [{ id: found.id, name: found.name }] : [];
+  }, [dentistId, dentists]);
 
   useEffect(() => {
     if (state.ok) onOpenChange(false);
   }, [state.ok, onOpenChange]);
 
+  useEffect(() => {
+    if (state.conflict) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelection(null);
+      setRefreshKey((k) => k + 1);
+    }
+  }, [state.conflict]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Book an appointment</DialogTitle>
           <DialogDescription>
-            Choose a dentist and time. We&apos;ll confirm shortly after booking.
+            Choose a dentist, then pick an available time. We&apos;ll confirm shortly after booking.
           </DialogDescription>
         </DialogHeader>
 
@@ -75,7 +93,13 @@ export function PatientBookDialog({
 
             <Field data-invalid={!!state.fieldErrors?.dentistId}>
               <FieldLabel htmlFor="dentistId">Dentist</FieldLabel>
-              <Select name="dentistId" defaultValue={undefined}>
+              <Select
+                value={dentistId ?? ""}
+                onValueChange={(v) => {
+                  setDentistId(v);
+                  setSelection(null);
+                }}
+              >
                 <SelectTrigger id="dentistId" aria-invalid={!!state.fieldErrors?.dentistId}>
                   <SelectValue placeholder="Select dentist" />
                 </SelectTrigger>
@@ -91,38 +115,38 @@ export function PatientBookDialog({
               <FieldError errors={toFieldErrors(state.fieldErrors?.dentistId)} />
             </Field>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Field data-invalid={!!state.fieldErrors?.startsAt}>
-                <FieldLabel htmlFor="startsAt">Starts</FieldLabel>
-                <Input
-                  id="startsAt"
-                  name="startsAt"
-                  type="datetime-local"
-                  required
-                  value={start}
-                  onChange={(e) => {
-                    setStart(e.target.value);
-                    if (e.target.value) {
-                      setEnd(isoDatetimeLocal(addMinutes(new Date(e.target.value), 30)));
-                    }
-                  }}
-                />
-                <FieldError errors={toFieldErrors(state.fieldErrors?.startsAt)} />
-              </Field>
+            {chosenDentists.length > 0 ? (
+              <BookingPicker
+                mode="patient"
+                dentists={chosenDentists}
+                durationMinutes={PATIENT_DURATION_MINUTES}
+                refreshKey={refreshKey}
+                onChange={setSelection}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Select a dentist to see available times.
+              </p>
+            )}
 
-              <Field data-invalid={!!state.fieldErrors?.endsAt}>
-                <FieldLabel htmlFor="endsAt">Ends</FieldLabel>
-                <Input
-                  id="endsAt"
-                  name="endsAt"
-                  type="datetime-local"
-                  required
-                  value={end}
-                  onChange={(e) => setEnd(e.target.value)}
-                />
-                <FieldError errors={toFieldErrors(state.fieldErrors?.endsAt)} />
-              </Field>
-            </div>
+            <FieldError errors={toFieldErrors(state.fieldErrors?.startsAt)} />
+            <FieldError errors={toFieldErrors(state.fieldErrors?.endsAt)} />
+
+            <input
+              type="hidden"
+              name="dentistId"
+              value={selection?.dentistId ?? dentistId ?? ""}
+            />
+            <input
+              type="hidden"
+              name="startsAt"
+              value={selection ? isoDatetimeLocal(selection.startsAt) : ""}
+            />
+            <input
+              type="hidden"
+              name="endsAt"
+              value={selection ? isoDatetimeLocal(selection.endsAt) : ""}
+            />
 
             <Field>
               <FieldLabel htmlFor="reason">Reason (optional)</FieldLabel>
@@ -147,7 +171,7 @@ export function PatientBookDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || !selection}>
               {pending ? "Booking…" : "Book"}
             </Button>
           </DialogFooter>

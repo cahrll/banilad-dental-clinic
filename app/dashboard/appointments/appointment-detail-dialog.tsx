@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Dialog,
@@ -11,15 +11,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { FieldError, FieldGroup } from "@/components/ui/field";
 import { AppointmentStatusBadge } from "@/components/app/status-badge";
+import {
+  BookingPicker,
+  type BookingSelection,
+} from "@/components/app/booking-picker";
 import {
   initialAppointmentFormState,
   toFieldErrors,
@@ -31,6 +29,21 @@ import {
 import { formatDateTime, isoDatetimeLocal } from "@/lib/datetime";
 import type { AppointmentStatus } from "@/generated/prisma/client";
 import type { CalendarAppointment } from "./week-grid";
+
+const STANDARD_DURATIONS = [15, 30, 45, 60, 90, 120] as const;
+
+function nearestStandardDuration(minutes: number): number {
+  let best = STANDARD_DURATIONS[0] as number;
+  let bestDelta = Math.abs(minutes - best);
+  for (const m of STANDARD_DURATIONS) {
+    const delta = Math.abs(minutes - m);
+    if (delta < bestDelta) {
+      best = m;
+      bestDelta = delta;
+    }
+  }
+  return best;
+}
 
 const NEXT_STATUSES: Record<AppointmentStatus, AppointmentStatus[]> = {
   SCHEDULED: ["CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"],
@@ -67,6 +80,26 @@ export function AppointmentDetailDialog({
 
   const start = new Date(appointment.startsAt);
   const end = new Date(appointment.endsAt);
+  const originalDurationMinutes = Math.max(
+    1,
+    Math.round((end.getTime() - start.getTime()) / 60000),
+  );
+  const pickerDuration = nearestStandardDuration(originalDurationMinutes);
+
+  const [selection, setSelection] = useState<BookingSelection | null>({
+    startsAt: start,
+    endsAt: new Date(start.getTime() + pickerDuration * 60000),
+    dentistId: appointment.dentistId,
+  });
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (reschedState.conflict) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelection(null);
+      setRefreshKey((k) => k + 1);
+    }
+  }, [reschedState.conflict]);
 
   const transitions = NEXT_STATUSES[appointment.status];
 
@@ -81,7 +114,7 @@ export function AppointmentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {appointment.patientName}
@@ -146,30 +179,29 @@ export function AppointmentDetailDialog({
                   <AlertDescription>{reschedState.formError}</AlertDescription>
                 </Alert>
               ) : null}
-              <div className="grid grid-cols-2 gap-3">
-                <Field data-invalid={!!reschedState.fieldErrors?.startsAt}>
-                  <FieldLabel htmlFor="startsAt">Starts</FieldLabel>
-                  <Input
-                    id="startsAt"
-                    name="startsAt"
-                    type="datetime-local"
-                    required
-                    defaultValue={isoDatetimeLocal(start)}
-                  />
-                  <FieldError errors={toFieldErrors(reschedState.fieldErrors?.startsAt)} />
-                </Field>
-                <Field data-invalid={!!reschedState.fieldErrors?.endsAt}>
-                  <FieldLabel htmlFor="endsAt">Ends</FieldLabel>
-                  <Input
-                    id="endsAt"
-                    name="endsAt"
-                    type="datetime-local"
-                    required
-                    defaultValue={isoDatetimeLocal(end)}
-                  />
-                  <FieldError errors={toFieldErrors(reschedState.fieldErrors?.endsAt)} />
-                </Field>
-              </div>
+              <BookingPicker
+                mode="staff"
+                dentists={[
+                  { id: appointment.dentistId, name: appointment.dentistName },
+                ]}
+                durationMinutes={pickerDuration}
+                excludeAppointmentId={appointment.id}
+                initialStart={start}
+                refreshKey={refreshKey}
+                onChange={setSelection}
+              />
+              <FieldError errors={toFieldErrors(reschedState.fieldErrors?.startsAt)} />
+              <FieldError errors={toFieldErrors(reschedState.fieldErrors?.endsAt)} />
+              <input
+                type="hidden"
+                name="startsAt"
+                value={selection ? isoDatetimeLocal(selection.startsAt) : ""}
+              />
+              <input
+                type="hidden"
+                name="endsAt"
+                value={selection ? isoDatetimeLocal(selection.endsAt) : ""}
+              />
             </FieldGroup>
             <DialogFooter className="mt-4">
               <Button
@@ -180,7 +212,7 @@ export function AppointmentDetailDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={reschedPending}>
+              <Button type="submit" disabled={reschedPending || !selection}>
                 {reschedPending ? "Saving…" : "Save new time"}
               </Button>
             </DialogFooter>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireRole, requireStaff, requirePatient } from "@/lib/auth/guards";
+import { dentistHasConflict } from "@/lib/availability";
 import {
   AppointmentCreateSchema,
   AppointmentRescheduleSchema,
@@ -16,31 +17,6 @@ import type {
   StatusActionState,
 } from "@/lib/auth/form-state";
 import type { AppointmentStatus } from "@/generated/prisma/client";
-
-// ----- Conflict detection -----
-// Two intervals [aStart, aEnd) and [bStart, bEnd) overlap iff aStart < bEnd && bStart < aEnd.
-// In Prisma terms for `dentistId, startsAt, endsAt`:
-//   AND: [{ startsAt: { lt: end } }, { endsAt: { gt: start } }]
-// Excludes CANCELLED + NO_SHOW since those slots are free.
-
-async function dentistHasConflict(opts: {
-  dentistId: string;
-  start: Date;
-  end: Date;
-  excludeAppointmentId?: string;
-}): Promise<boolean> {
-  const conflict = await prisma.appointment.findFirst({
-    where: {
-      dentistId: opts.dentistId,
-      status: { in: ["SCHEDULED", "CONFIRMED", "COMPLETED"] },
-      startsAt: { lt: opts.end },
-      endsAt: { gt: opts.start },
-      ...(opts.excludeAppointmentId ? { NOT: { id: opts.excludeAppointmentId } } : {}),
-    },
-    select: { id: true },
-  });
-  return !!conflict;
-}
 
 // ----- Staff: create appointment -----
 
@@ -242,9 +218,13 @@ export async function patientBookAppointmentAction(
   const start = new Date(data.startsAt);
   const end = new Date(data.endsAt);
 
-  // Patients can only book in the future.
-  if (start.getTime() < Date.now()) {
-    return { ok: false, fieldErrors: { startsAt: ["Pick a future date and time."] } };
+  // Patients must book at least 2 hours ahead. The picker dims slots inside this window;
+  // this server-side check is the authoritative gate.
+  if (start.getTime() < Date.now() + 2 * 60 * 60 * 1000) {
+    return {
+      ok: false,
+      fieldErrors: { startsAt: ["Pick a time at least 2 hours from now."] },
+    };
   }
 
   if (await dentistHasConflict({ dentistId: data.dentistId, start, end })) {
