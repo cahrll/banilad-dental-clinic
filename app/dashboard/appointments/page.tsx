@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { addDays } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,7 +15,6 @@ import {
 } from "@/lib/datetime";
 import { WeekGrid } from "./week-grid";
 import { DentistFilter } from "./dentist-filter";
-import { NewAppointmentTrigger } from "./new-appointment-trigger";
 
 export const metadata = { title: "Appointments · Banilad Dental Clinic" };
 
@@ -75,11 +74,11 @@ export default async function AppointmentsPage({
         title="Appointments"
         description={`Week of ${formatDateLong(start)}`}
         actions={
-          <NewAppointmentTrigger
-            dentists={dentists.map((d) => ({ id: d.id, name: d.user.name }))}
-            defaultDentistId={dentistId}
-            defaultStart={start}
-          />
+          <Button asChild size="sm">
+            <Link href="/dashboard/appointments/new">
+              <Plus aria-hidden /> New appointment
+            </Link>
+          </Button>
         }
       />
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireRole, requireStaff, requirePatient } from "@/lib/auth/guards";
@@ -78,7 +79,7 @@ export async function createAppointmentAction(
 
   revalidatePath("/dashboard/appointments");
   revalidatePath(`/dashboard/patients/${data.patientId}`);
-  return { ok: true };
+  redirect("/dashboard/appointments");
 }
 
 // ----- Staff: reschedule -----
@@ -138,7 +139,7 @@ export async function rescheduleAppointmentAction(
   revalidatePath("/dashboard/appointments");
   revalidatePath(`/dashboard/patients/${existing.patientId}`);
   revalidatePath("/portal/appointments");
-  return { ok: true, appointmentId };
+  redirect("/dashboard/appointments");
 }
 
 // ----- Staff: status change -----
@@ -250,7 +251,7 @@ export async function patientBookAppointmentAction(
 
   revalidatePath("/portal/appointments");
   revalidatePath("/dashboard/appointments");
-  return { ok: true };
+  redirect("/portal/appointments");
 }
 
 export async function patientCancelAppointmentAction(

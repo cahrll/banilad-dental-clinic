@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { ChevronsUpDown, LogOut, Monitor, Moon, Sun } from "lucide-react";
+import { CheckIcon, ChevronsUpDown, LogOut, Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -91,34 +91,28 @@ export function SidebarUserMenu({
               <RoleBadge role={role} />
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                {theme === "dark" ? (
-                  <Moon />
-                ) : theme === "light" ? (
-                  <Sun />
-                ) : (
-                  <Monitor />
-                )}
-                Theme
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuRadioGroup
-                  value={theme}
-                  onValueChange={(v) => setTheme(v)}
-                >
-                  <DropdownMenuRadioItem value="light">
-                    <Sun /> Light
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="dark">
-                    <Moon /> Dark
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="system">
-                    <Monitor /> System
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <DropdownMenuLabel>Theme</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={() => setTheme("light")} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sun />
+                Light
+              </div>
+                {theme === "light" && <CheckIcon />}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTheme("dark")} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Moon />
+                Dark
+              </div>
+              {theme === "dark" && <CheckIcon />}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTheme("system")} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Monitor />
+                System
+              </div>
+              {theme === "system" && <CheckIcon />}
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               disabled={pending}

@@ -1,11 +1,12 @@
-import { CalendarRange } from "lucide-react";
+import Link from "next/link";
+import { CalendarRange, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/app/page-header";
 import { AppointmentStatusBadge } from "@/components/app/status-badge";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
-import { PatientBookTrigger } from "./book-trigger";
 import { CancelButton } from "./cancel-button";
 
 export const metadata = { title: "My appointments · Banilad Dental Clinic" };
@@ -31,25 +32,19 @@ export default async function PatientAppointmentsPage() {
     );
   }
 
-  const [dentists, appointments] = await Promise.all([
-    prisma.dentist.findMany({
-      orderBy: { user: { name: "asc" } },
-      select: { id: true, user: { select: { name: true } }, specialty: true },
-    }),
-    prisma.appointment.findMany({
-      where: { patientId: patient.id },
-      orderBy: { startsAt: "desc" },
-      take: 50,
-      select: {
-        id: true,
-        startsAt: true,
-        endsAt: true,
-        status: true,
-        reason: true,
-        dentist: { select: { user: { select: { name: true } } } },
-      },
-    }),
-  ]);
+  const appointments = await prisma.appointment.findMany({
+    where: { patientId: patient.id },
+    orderBy: { startsAt: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      startsAt: true,
+      endsAt: true,
+      status: true,
+      reason: true,
+      dentist: { select: { user: { select: { name: true } } } },
+    },
+  });
 
   const now = new Date();
   const upcoming = appointments.filter((a) => a.endsAt >= now && a.status !== "CANCELLED");
@@ -61,13 +56,11 @@ export default async function PatientAppointmentsPage() {
         title="My appointments"
         description="Book a slot, view upcoming visits, or cancel."
         actions={
-          <PatientBookTrigger
-            dentists={dentists.map((d) => ({
-              id: d.id,
-              name: d.user.name,
-              specialty: d.specialty,
-            }))}
-          />
+          <Button asChild size="sm">
+            <Link href="/portal/appointments/new">
+              <Plus aria-hidden /> Book appointment
+            </Link>
+          </Button>
         }
       />
 
