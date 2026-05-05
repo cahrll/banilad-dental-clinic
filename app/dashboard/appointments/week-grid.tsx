@@ -14,6 +14,7 @@ import {
   APPOINTMENT_STATUS_LABELS,
 } from "@/components/app/status-badge";
 import type { AppointmentStatus } from "@/generated/prisma/client";
+import { assignLanes, type LaneLayout } from "@/lib/calendar-layout";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 
 export type CalendarAppointment = {
@@ -28,22 +29,75 @@ export type CalendarAppointment = {
   dentistName: string;
 };
 
+type LaidOutAppointment = LaneLayout<{
+  id: string;
+  startsAt: Date;
+  endsAt: Date;
+  appointment: CalendarAppointment;
+}>;
+
 const HOUR_HEIGHT_PX = 72; // each hour row — sized for 2-3 lines of card text
 const SLOT_MINUTES = 60;
 const TOTAL_HOURS = CALENDAR_DAY_END_HOUR - CALENDAR_DAY_START_HOUR;
 // Below this rendered card height, only the patient name is shown so short
 // slots (e.g. 15 min) don't render clipped/garbled secondary text.
 const COMPACT_BLOCK_THRESHOLD_PX = 44;
+const LANE_GAP_PX = 2;
 
 export function WeekGrid({
   days,
+  selectedDay,
   appointments,
+  dentistHueByDentistId,
 }: {
   days: Date[];
+  selectedDay: Date;
   appointments: CalendarAppointment[];
+  dentistHueByDentistId: Record<string, number> | null;
 }) {
   const [selected, setSelected] = useState<CalendarAppointment | null>(null);
 
+  return (
+    <>
+      <div className="hidden md:block">
+        <WeekView
+          days={days}
+          appointments={appointments}
+          dentistHueByDentistId={dentistHueByDentistId}
+          onSelect={setSelected}
+        />
+      </div>
+      <div className="md:hidden">
+        <DayView
+          day={selectedDay}
+          appointments={appointments}
+          dentistHueByDentistId={dentistHueByDentistId}
+          onSelect={setSelected}
+        />
+      </div>
+
+      {selected ? (
+        <AppointmentDetailDialog
+          appointment={selected}
+          open={!!selected}
+          onOpenChange={(o) => !o && setSelected(null)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function WeekView({
+  days,
+  appointments,
+  dentistHueByDentistId,
+  onSelect,
+}: {
+  days: Date[];
+  appointments: CalendarAppointment[];
+  dentistHueByDentistId: Record<string, number> | null;
+  onSelect: (a: CalendarAppointment) => void;
+}) {
   return (
     <>
       <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] border-b text-xs">
@@ -69,71 +123,156 @@ export function WeekGrid({
       </div>
 
       <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))]">
-        <div className="border-r bg-muted/40">
-          {Array.from({ length: TOTAL_HOURS }).map((_, i) => {
-            const hour = CALENDAR_DAY_START_HOUR + i;
-            return (
-              <div
-                key={hour}
-                className="flex items-start justify-end px-2 pt-1 text-xs text-muted-foreground"
-                style={{ height: HOUR_HEIGHT_PX }}
-              >
-                {formatHourLabel(hour)}
-              </div>
-            );
-          })}
-        </div>
+        <HourGutter />
+        {days.map((day) => (
+          <DayColumn
+            key={day.toISOString()}
+            day={day}
+            appointments={appointments}
+            dentistHueByDentistId={dentistHueByDentistId}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
 
-        {days.map((day) => {
-          const dayAppts = appointments.filter((a) =>
-            isSameDay(new Date(a.startsAt), day),
-          );
-          return (
-            <div
-              key={day.toISOString()}
-              className="relative border-r last:border-r-0"
-              style={{ height: HOUR_HEIGHT_PX * TOTAL_HOURS }}
-            >
-              {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
-                <div
-                  key={i}
-                  className="border-b border-dashed border-border/60 last:border-b-0"
-                  style={{ height: HOUR_HEIGHT_PX }}
-                />
-              ))}
-              {dayAppts.map((a) => (
-                <AppointmentBlock
-                  key={a.id}
-                  appointment={a}
-                  onClick={() => setSelected(a)}
-                />
-              ))}
-            </div>
-          );
-        })}
+function DayView({
+  day,
+  appointments,
+  dentistHueByDentistId,
+  onSelect,
+}: {
+  day: Date;
+  appointments: CalendarAppointment[];
+  dentistHueByDentistId: Record<string, number> | null;
+  onSelect: (a: CalendarAppointment) => void;
+}) {
+  const { weekday, dayMonth } = formatDayHeader(day);
+  const today = isSameDay(day, new Date());
+  return (
+    <>
+      <div className="grid grid-cols-[64px_minmax(0,1fr)] border-b text-xs">
+        <div className="border-r bg-muted/40" />
+        <div
+          className={cn(
+            "flex flex-col items-center gap-0.5 py-2",
+            today && "bg-primary/5",
+          )}
+        >
+          <span className="text-muted-foreground">{weekday}</span>
+          <span className={cn("text-sm font-medium", today && "text-primary")}>
+            {dayMonth}
+          </span>
+        </div>
       </div>
 
-      {selected ? (
-        <AppointmentDetailDialog
-          appointment={selected}
-          open={!!selected}
-          onOpenChange={(o) => !o && setSelected(null)}
+      <div className="grid grid-cols-[64px_minmax(0,1fr)]">
+        <HourGutter />
+        <DayColumn
+          day={day}
+          appointments={appointments}
+          dentistHueByDentistId={dentistHueByDentistId}
+          onSelect={onSelect}
         />
-      ) : null}
+      </div>
     </>
+  );
+}
+
+function HourGutter() {
+  return (
+    <div className="border-r bg-muted/40">
+      {Array.from({ length: TOTAL_HOURS }).map((_, i) => {
+        const hour = CALENDAR_DAY_START_HOUR + i;
+        return (
+          <div
+            key={hour}
+            className="flex items-start justify-end px-2 pt-1 text-xs text-muted-foreground"
+            style={{ height: HOUR_HEIGHT_PX }}
+          >
+            {formatHourLabel(hour)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function DayColumn({
+  day,
+  appointments,
+  dentistHueByDentistId,
+  onSelect,
+}: {
+  day: Date;
+  appointments: CalendarAppointment[];
+  dentistHueByDentistId: Record<string, number> | null;
+  onSelect: (a: CalendarAppointment) => void;
+}) {
+  const dayAppts = appointments.filter((a) =>
+    isSameDay(new Date(a.startsAt), day),
+  );
+
+  const laidOut: LaidOutAppointment[] = assignLanes(
+    dayAppts.map((a) => ({
+      id: a.id,
+      startsAt: new Date(a.startsAt),
+      endsAt: new Date(a.endsAt),
+      appointment: a,
+    })),
+  );
+
+  return (
+    <div
+      className="relative border-r last:border-r-0"
+      style={{ height: HOUR_HEIGHT_PX * TOTAL_HOURS }}
+    >
+      {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
+        <div
+          key={i}
+          className="border-b border-dashed border-border/60 last:border-b-0"
+          style={{ height: HOUR_HEIGHT_PX }}
+        />
+      ))}
+      {laidOut.map((e) => (
+        <AppointmentBlock
+          key={e.id}
+          appointment={e.appointment}
+          start={e.startsAt}
+          end={e.endsAt}
+          lane={e.lane}
+          lanes={e.lanes}
+          dentistHueIndex={
+            dentistHueByDentistId
+              ? (dentistHueByDentistId[e.appointment.dentistId] ?? null)
+              : null
+          }
+          onClick={() => onSelect(e.appointment)}
+        />
+      ))}
+    </div>
   );
 }
 
 function AppointmentBlock({
   appointment,
+  start,
+  end,
+  lane,
+  lanes,
+  dentistHueIndex,
   onClick,
 }: {
   appointment: CalendarAppointment;
+  start: Date;
+  end: Date;
+  lane: number;
+  lanes: number;
+  dentistHueIndex: number | null;
   onClick: () => void;
 }) {
-  const start = new Date(appointment.startsAt);
-  const end = new Date(appointment.endsAt);
-
   const startMinutes =
     (start.getHours() - CALENDAR_DAY_START_HOUR) * 60 + start.getMinutes();
   const durationMinutes = Math.max(15, (end.getTime() - start.getTime()) / 60000);
@@ -143,19 +282,43 @@ function AppointmentBlock({
   const compact = renderedHeight < COMPACT_BLOCK_THRESHOLD_PX;
 
   const tone = blockTone(appointment.status);
+  const widthPct = 100 / lanes;
+  const leftPct = lane * widthPct;
+  const positionStyle: React.CSSProperties = {
+    top,
+    height: renderedHeight,
+    left: `calc(${leftPct}% + 4px)`,
+    width: `calc(${widthPct}% - ${LANE_GAP_PX + 4}px)`,
+  };
+  const hueVar =
+    dentistHueIndex != null ? `var(--chart-${dentistHueIndex})` : null;
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "absolute inset-x-1 overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs leading-tight shadow-sm transition-colors",
+        "absolute overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs leading-tight shadow-sm transition-colors",
         tone,
+        hueVar && "border-l-[3px]",
       )}
-      style={{ top, height: renderedHeight }}
+      style={
+        hueVar
+          ? { ...positionStyle, borderLeftColor: hueVar }
+          : positionStyle
+      }
       aria-label={`${appointment.patientName} with ${appointment.dentistName} at ${formatTime(start)}`}
     >
-      <p className="truncate font-medium leading-tight">{appointment.patientName}</p>
+      <p className="flex items-center gap-1 truncate font-medium leading-tight">
+        {hueVar ? (
+          <span
+            aria-hidden
+            className="inline-block size-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: hueVar }}
+          />
+        ) : null}
+        <span className="truncate">{appointment.patientName}</span>
+      </p>
       {!compact ? (
         <p className="truncate text-[10px] leading-tight opacity-80">
           {formatTime(start)} · {appointment.dentistName}

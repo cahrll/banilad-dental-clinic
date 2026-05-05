@@ -10,8 +10,8 @@ import {
   startOfWeek,
 } from "date-fns";
 
-export const CALENDAR_DAY_START_HOUR = 8;
-export const CALENDAR_DAY_END_HOUR = 18;
+export const CALENDAR_DAY_START_HOUR = 9;
+export const CALENDAR_DAY_END_HOUR = 17;
 export const CALENDAR_SLOT_MINUTES = 30;
 
 export function weekStart(date: Date): Date {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { addDays } from "date-fns";
+import { addDays, endOfDay, startOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/app/page-header";
@@ -18,7 +18,9 @@ import { DentistFilter } from "./dentist-filter";
 
 export const metadata = { title: "Appointments · Banilad Dental Clinic" };
 
-type SearchParams = { week?: string; dentistId?: string };
+type SearchParams = { week?: string; date?: string; dentistId?: string };
+
+const HUE_COUNT = 5;
 
 export default async function AppointmentsPage({
   searchParams,
@@ -26,12 +28,28 @@ export default async function AppointmentsPage({
   searchParams: Promise<SearchParams>;
 }) {
   await requireStaff();
-  const { week, dentistId } = await searchParams;
+  const { week, date, dentistId } = await searchParams;
 
-  const cursor = week ? new Date(`${week}T00:00:00`) : new Date();
-  const start = weekStart(cursor);
+  const dayCursor = date ? new Date(`${date}T00:00:00`) : new Date();
+  const weekCursor = week
+    ? new Date(`${week}T00:00:00`)
+    : date
+      ? dayCursor
+      : new Date();
+
+  const start = weekStart(weekCursor);
   const days = weekDays(start);
-  const { start: rangeStart, end: rangeEnd } = rangeForWeek(start);
+  const { start: weekRangeStart, end: weekRangeEnd } = rangeForWeek(start);
+
+  const selectedDay = date ? dayCursor : new Date();
+  const dayRangeStart = startOfDay(selectedDay);
+  const dayRangeEnd = endOfDay(selectedDay);
+
+  // Fetch the union of both ranges so the same payload feeds both views
+  // (CSS picks which view renders, no JS branching during render).
+  const fetchStart =
+    dayRangeStart < weekRangeStart ? dayRangeStart : weekRangeStart;
+  const fetchEnd = dayRangeEnd > weekRangeEnd ? dayRangeEnd : weekRangeEnd;
 
   const [dentists, appointments] = await Promise.all([
     prisma.dentist.findMany({
@@ -40,7 +58,7 @@ export default async function AppointmentsPage({
     }),
     prisma.appointment.findMany({
       where: {
-        startsAt: { gte: rangeStart, lte: rangeEnd },
+        startsAt: { gte: fetchStart, lte: fetchEnd },
         ...(dentistId ? { dentistId } : {}),
       },
       orderBy: { startsAt: "asc" },
@@ -58,15 +76,35 @@ export default async function AppointmentsPage({
     }),
   ]);
 
-  const prevHref = appendQuery({
+  // Hue map only matters in combined view — when filtered to one dentist,
+  // the colour is redundant. Sorted dentist order keeps the assignment stable.
+  const dentistHueByDentistId = dentistId
+    ? null
+    : Object.fromEntries(
+        dentists.map((d, i) => [d.id, (i % HUE_COUNT) + 1]),
+      );
+
+  // Prev/Today/Next render two link sets (week-stride for ≥md, day-stride for <md);
+  // CSS hides the inactive one so semantics follow the visible view.
+  const weekPrev = appendQuery({
     week: isoDateInput(addDays(start, -7)),
     dentistId,
   });
-  const nextHref = appendQuery({
+  const weekNext = appendQuery({
     week: isoDateInput(addDays(start, 7)),
     dentistId,
   });
-  const todayHref = appendQuery({ dentistId });
+  const weekToday = appendQuery({ dentistId });
+
+  const dayPrev = appendQuery({
+    date: isoDateInput(addDays(selectedDay, -1)),
+    dentistId,
+  });
+  const dayNext = appendQuery({
+    date: isoDateInput(addDays(selectedDay, 1)),
+    dentistId,
+  });
+  const dayToday = appendQuery({ dentistId });
 
   return (
     <div className="space-y-6">
@@ -83,19 +121,36 @@ export default async function AppointmentsPage({
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button asChild variant="outline" size="sm">
-          <Link href={prevHref}>
-            <ChevronLeft aria-hidden /> Prev
-          </Link>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <Link href={todayHref}>Today</Link>
-        </Button>
-        <Button asChild variant="outline" size="sm">
-          <Link href={nextHref}>
-            Next <ChevronRight aria-hidden />
-          </Link>
-        </Button>
+        <div className="hidden items-center gap-2 md:flex">
+          <Button asChild variant="outline" size="sm">
+            <Link href={weekPrev}>
+              <ChevronLeft aria-hidden /> Prev
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={weekToday}>Today</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={weekNext}>
+              Next <ChevronRight aria-hidden />
+            </Link>
+          </Button>
+        </div>
+        <div className="flex items-center gap-2 md:hidden">
+          <Button asChild variant="outline" size="sm">
+            <Link href={dayPrev}>
+              <ChevronLeft aria-hidden /> Prev
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={dayToday}>Today</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={dayNext}>
+              Next <ChevronRight aria-hidden />
+            </Link>
+          </Button>
+        </div>
         <div className="ms-auto">
           <DentistFilter
             dentists={dentists.map((d) => ({ id: d.id, name: d.user.name }))}
@@ -107,6 +162,8 @@ export default async function AppointmentsPage({
       <Card className="overflow-hidden p-0 gap-0">
         <WeekGrid
           days={days}
+          selectedDay={selectedDay}
+          dentistHueByDentistId={dentistHueByDentistId}
           appointments={appointments.map((a) => ({
             id: a.id,
             startsAt: a.startsAt.toISOString(),
