@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import {
+  CALENDAR_DAY_END_HOUR,
   formatDateLong,
   isoDateInput,
   rangeForWeek,
@@ -83,6 +84,16 @@ export default async function AppointmentsPage({
     : Object.fromEntries(
         dentists.map((d, i) => [d.id, (i % HUE_COUNT) + 1]),
       );
+
+  // Auto-extend the grid only when an appointment ends past the default end hour
+  // (e.g. legacy / seed-produced over-runs). Real production data can't trigger
+  // this — the booking picker enforces the 17:00 ceiling.
+  const latestEndHour = appointments.reduce((max, a) => {
+    const end = a.endsAt;
+    const hour = end.getHours() + (end.getMinutes() > 0 ? 1 : 0);
+    return hour > max ? hour : max;
+  }, CALENDAR_DAY_END_HOUR);
+  const effectiveEndHour = Math.min(24, Math.max(CALENDAR_DAY_END_HOUR, latestEndHour));
 
   // Prev/Today/Next render two link sets (week-stride for ≥md, day-stride for <md);
   // CSS hides the inactive one so semantics follow the visible view.
@@ -163,6 +174,7 @@ export default async function AppointmentsPage({
         <WeekGrid
           days={days}
           selectedDay={selectedDay}
+          endHour={effectiveEndHour}
           dentistHueByDentistId={dentistHueByDentistId}
           appointments={appointments.map((a) => ({
             id: a.id,

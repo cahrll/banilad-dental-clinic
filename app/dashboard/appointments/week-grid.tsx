@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { isSameDay } from "date-fns";
 import {
-  CALENDAR_DAY_END_HOUR,
   CALENDAR_DAY_START_HOUR,
   formatDayHeader,
   formatTime,
@@ -38,30 +37,40 @@ type LaidOutAppointment = LaneLayout<{
 
 const HOUR_HEIGHT_PX = 72; // each hour row — sized for 2-3 lines of card text
 const SLOT_MINUTES = 60;
-const TOTAL_HOURS = CALENDAR_DAY_END_HOUR - CALENDAR_DAY_START_HOUR;
-// Below this rendered card height, only the patient name is shown so short
-// slots (e.g. 15 min) don't render clipped/garbled secondary text.
-const COMPACT_BLOCK_THRESHOLD_PX = 44;
 const LANE_GAP_PX = 2;
+
+type RenderTier = "veryNarrow" | "narrow" | "short" | "full";
+
+function renderTier(durationMinutes: number, lanes: number): RenderTier {
+  if (lanes >= 3) return "veryNarrow";
+  if (lanes === 2 && durationMinutes <= 15) return "veryNarrow";
+  if (lanes === 2) return "narrow";
+  if (durationMinutes <= 30) return "short";
+  return "full";
+}
 
 export function WeekGrid({
   days,
   selectedDay,
+  endHour,
   appointments,
   dentistHueByDentistId,
 }: {
   days: Date[];
   selectedDay: Date;
+  endHour: number;
   appointments: CalendarAppointment[];
   dentistHueByDentistId: Record<string, number> | null;
 }) {
   const [selected, setSelected] = useState<CalendarAppointment | null>(null);
+  const totalHours = endHour - CALENDAR_DAY_START_HOUR;
 
   return (
     <>
       <div className="hidden md:block">
         <WeekView
           days={days}
+          totalHours={totalHours}
           appointments={appointments}
           dentistHueByDentistId={dentistHueByDentistId}
           onSelect={setSelected}
@@ -70,6 +79,7 @@ export function WeekGrid({
       <div className="md:hidden">
         <DayView
           day={selectedDay}
+          totalHours={totalHours}
           appointments={appointments}
           dentistHueByDentistId={dentistHueByDentistId}
           onSelect={setSelected}
@@ -89,11 +99,13 @@ export function WeekGrid({
 
 function WeekView({
   days,
+  totalHours,
   appointments,
   dentistHueByDentistId,
   onSelect,
 }: {
   days: Date[];
+  totalHours: number;
   appointments: CalendarAppointment[];
   dentistHueByDentistId: Record<string, number> | null;
   onSelect: (a: CalendarAppointment) => void;
@@ -123,11 +135,12 @@ function WeekView({
       </div>
 
       <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))]">
-        <HourGutter />
+        <HourGutter totalHours={totalHours} />
         {days.map((day) => (
           <DayColumn
             key={day.toISOString()}
             day={day}
+            totalHours={totalHours}
             appointments={appointments}
             dentistHueByDentistId={dentistHueByDentistId}
             onSelect={onSelect}
@@ -140,11 +153,13 @@ function WeekView({
 
 function DayView({
   day,
+  totalHours,
   appointments,
   dentistHueByDentistId,
   onSelect,
 }: {
   day: Date;
+  totalHours: number;
   appointments: CalendarAppointment[];
   dentistHueByDentistId: Record<string, number> | null;
   onSelect: (a: CalendarAppointment) => void;
@@ -169,9 +184,10 @@ function DayView({
       </div>
 
       <div className="grid grid-cols-[64px_minmax(0,1fr)]">
-        <HourGutter />
+        <HourGutter totalHours={totalHours} />
         <DayColumn
           day={day}
+          totalHours={totalHours}
           appointments={appointments}
           dentistHueByDentistId={dentistHueByDentistId}
           onSelect={onSelect}
@@ -181,10 +197,10 @@ function DayView({
   );
 }
 
-function HourGutter() {
+function HourGutter({ totalHours }: { totalHours: number }) {
   return (
     <div className="border-r bg-muted/40">
-      {Array.from({ length: TOTAL_HOURS }).map((_, i) => {
+      {Array.from({ length: totalHours }).map((_, i) => {
         const hour = CALENDAR_DAY_START_HOUR + i;
         return (
           <div
@@ -202,11 +218,13 @@ function HourGutter() {
 
 function DayColumn({
   day,
+  totalHours,
   appointments,
   dentistHueByDentistId,
   onSelect,
 }: {
   day: Date;
+  totalHours: number;
   appointments: CalendarAppointment[];
   dentistHueByDentistId: Record<string, number> | null;
   onSelect: (a: CalendarAppointment) => void;
@@ -227,9 +245,9 @@ function DayColumn({
   return (
     <div
       className="relative border-r last:border-r-0"
-      style={{ height: HOUR_HEIGHT_PX * TOTAL_HOURS }}
+      style={{ height: HOUR_HEIGHT_PX * totalHours }}
     >
-      {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
+      {Array.from({ length: totalHours }).map((_, i) => (
         <div
           key={i}
           className="border-b border-dashed border-border/60 last:border-b-0"
@@ -279,7 +297,7 @@ function AppointmentBlock({
   const top = (startMinutes / SLOT_MINUTES) * HOUR_HEIGHT_PX;
   const rawHeight = (durationMinutes / SLOT_MINUTES) * HOUR_HEIGHT_PX;
   const renderedHeight = Math.max(28, rawHeight - 2);
-  const compact = renderedHeight < COMPACT_BLOCK_THRESHOLD_PX;
+  const tier = renderTier(durationMinutes, lanes);
 
   const tone = blockTone(appointment.status);
   const widthPct = 100 / lanes;
@@ -293,10 +311,21 @@ function AppointmentBlock({
   const hueVar =
     dentistHueIndex != null ? `var(--chart-${dentistHueIndex})` : null;
 
+  const statusLabel = APPOINTMENT_STATUS_LABELS[appointment.status];
+  const showTimeLine = tier === "narrow" || tier === "short" || tier === "full";
+  const showDentist = tier === "short" || tier === "full";
+  const showStatus =
+    (tier === "short" || tier === "full") && appointment.status !== "SCHEDULED";
+
+  const tooltip = `${appointment.patientName} · ${formatTime(start)}${
+    end ? ` – ${formatTime(end)}` : ""
+  } · ${appointment.dentistName} · ${statusLabel}`;
+
   return (
     <button
       type="button"
       onClick={onClick}
+      title={tooltip}
       className={cn(
         "absolute overflow-hidden rounded-md border px-2 py-1.5 text-left text-xs leading-tight shadow-sm transition-colors",
         tone,
@@ -319,14 +348,15 @@ function AppointmentBlock({
         ) : null}
         <span className="truncate">{appointment.patientName}</span>
       </p>
-      {!compact ? (
+      {showTimeLine ? (
         <p className="truncate text-[10px] leading-tight opacity-80">
-          {formatTime(start)} · {appointment.dentistName}
+          {formatTime(start)}
+          {showDentist ? ` · ${appointment.dentistName}` : ""}
         </p>
       ) : null}
-      {!compact && appointment.status !== "SCHEDULED" ? (
+      {showStatus ? (
         <p className="mt-0.5 truncate text-[10px] uppercase leading-tight opacity-80">
-          {APPOINTMENT_STATUS_LABELS[appointment.status]}
+          {statusLabel}
         </p>
       ) : null}
     </button>
