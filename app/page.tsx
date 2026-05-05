@@ -3,7 +3,6 @@ import {
   CalendarRange,
   ClipboardList,
   Receipt,
-  ShieldCheck,
   Stethoscope,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,17 +55,12 @@ export default async function Home() {
       <main className="flex-1">
         <section className="mx-auto flex w-full max-w-5xl flex-col items-start gap-8 px-6 py-20">
           <div className="space-y-4">
-            <span className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground">
-              <ShieldCheck className="size-3.5" aria-hidden />
-              Custom auth · MongoDB · Next.js 16
-            </span>
             <h1 className="max-w-3xl text-4xl font-semibold tracking-tight md:text-5xl">
-              The clinic console for Banilad Dental.
+              Banilad Dental Clinic. Now online.
             </h1>
             <p className="max-w-2xl text-lg text-muted-foreground">
-              Manage patients, schedule appointments, record treatments, and
-              issue invoices — all in one place. Patients get a dedicated portal
-              to book and review their care.
+              Book a visit, check your treatment history, or pay your invoice
+              from anywhere.
             </p>
           </div>
 
@@ -94,23 +88,23 @@ export default async function Home() {
           <div className="mx-auto grid w-full max-w-5xl gap-4 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
             <Tile
               Icon={ClipboardList}
-              title="Patient records"
-              body="Demographics, medical history, allergies, and dental charts."
+              title="See your records"
+              body="Past visits, treatments, and invoices, kept where you can find them."
             />
             <Tile
               Icon={CalendarRange}
-              title="Appointments"
-              body="Conflict-aware scheduling across dentists and chairs."
+              title="Book a visit"
+              body="Pick a time that works. Reschedule if something comes up."
             />
             <Tile
               Icon={Stethoscope}
-              title="Treatments"
-              body="Tooth-level procedures linked to invoices and records."
+              title="Chart what you treated"
+              body="Click teeth on the chart, log the procedure, and the record updates."
             />
             <Tile
               Icon={Receipt}
-              title="Billing"
-              body="Invoices, payments, and balance tracking."
+              title="Send the bill"
+              body="Issue an invoice, take payment, watch what's outstanding."
             />
           </div>
         </section>
