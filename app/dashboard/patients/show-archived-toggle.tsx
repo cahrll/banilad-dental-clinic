@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Label } from "@/components/ui/label";
 
 export function ShowArchivedToggle({
   defaultChecked,
@@ -12,7 +11,7 @@ export function ShowArchivedToggle({
 }) {
   const router = useRouter();
   return (
-    <Label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+    <label className="flex cursor-pointer items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
       <input
         type="checkbox"
         defaultChecked={defaultChecked}
@@ -23,9 +22,9 @@ export function ShowArchivedToggle({
           const queryString = next.toString();
           router.replace(queryString ? `?${queryString}` : "?");
         }}
-        className="size-4 rounded border-input"
+        className="size-3.5 rounded-[2px] border-input accent-primary"
       />
       Show archived
-    </Label>
+    </label>
   );
 }

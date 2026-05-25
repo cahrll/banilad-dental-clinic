@@ -1,11 +1,18 @@
-import { CalendarRange, Receipt, TrendingUp, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import {
+  KpiGrid,
+  KpiCell,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
 import { RangeSelector } from "./range-selector";
-import { ReportsCharts } from "./reports-charts";
+import {
+  AppointmentsPerDentistChart,
+  RevenueChart,
+  TopProceduresChart,
+} from "./reports-charts";
 
 export const metadata = { title: "Reports · Banilad Dental Clinic" };
 
@@ -55,7 +62,7 @@ export default async function ReportsPage({
         startsAt: { gte: start },
         status: { in: ["SCHEDULED", "CONFIRMED", "COMPLETED"] },
       },
-      select: { dentistId: true, status: true },
+      select: { dentistId: true, status: true, startsAt: true },
     }),
     prisma.treatmentRecord.findMany({
       where: { performedAt: { gte: start } },
@@ -109,12 +116,14 @@ export default async function ReportsPage({
     revenueBuckets.set(k, (revenueBuckets.get(k) ?? 0) + p.amountCents);
   }
 
-  const revenueSeries = Array.from(revenueBuckets.entries()).map(([k, cents]) => ({
-    bucket: k,
-    label: bucketByMonth ? formatMonthLabel(k) : formatDayLabel(k),
-    cents,
-    amount: cents / 100,
-  }));
+  const revenueSeries = Array.from(revenueBuckets.entries()).map(
+    ([k, cents]) => ({
+      bucket: k,
+      label: bucketByMonth ? formatMonthLabel(k) : formatDayLabel(k),
+      cents,
+      amount: cents / 100,
+    }),
+  );
 
   const totalRevenueCents = payments.reduce((acc, p) => acc + p.amountCents, 0);
 
@@ -155,113 +164,134 @@ export default async function ReportsPage({
     if (balance > 0 && inv.dueAt && inv.dueAt < today) overdueCount += 1;
   }
 
+  // ---- Sparkline series for KPI cells ----
+  const revSpark = revenueSeries.slice(-7).map((b) => b.cents);
+  const apptSpark = (() => {
+    const buckets = new Array<number>(7).fill(0);
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - 6);
+    const cutoffMs = cutoff.getTime();
+    const dayMs = 24 * 60 * 60 * 1000;
+    for (const a of appointmentsInRange) {
+      const idx = Math.floor((a.startsAt.getTime() - cutoffMs) / dayMs);
+      if (idx >= 0 && idx < 7) buckets[idx] += 1;
+    }
+    return buckets;
+  })();
+
+  const noActivity =
+    payments.length === 0 &&
+    appointmentsInRange.length === 0 &&
+    treatments.length === 0;
+
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-10">
+      <PageHead
+        crumb={`/ reports / last ${days} days`}
         title="Reports"
         description={`Snapshot for ${label.toLowerCase()}.`}
         actions={<RangeSelector value={rangeKey} />}
       />
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          Icon={TrendingUp}
+      {/* KPI block */}
+      <KpiGrid columns={4}>
+        <KpiCell
           label="Revenue"
           value={formatCents(totalRevenueCents)}
-          sub={`${payments.length} payment${payments.length === 1 ? "" : "s"}`}
+          series={revSpark}
+          meta={`${payments.length} payment${payments.length === 1 ? "" : "s"}`}
         />
-        <KpiCard
-          Icon={CalendarRange}
+        <KpiCell
           label="Appointments"
           value={String(appointmentsInRange.length)}
-          sub={`${appointmentsInRange.filter((a) => a.status === "COMPLETED").length} completed`}
+          series={apptSpark}
+          meta={`${appointmentsInRange.filter((a) => a.status === "COMPLETED").length} completed`}
         />
-        <KpiCard
-          Icon={Users}
+        <KpiCell
           label="New patients"
           value={String(newPatients)}
+          meta={
+            newPatients === 0 ? "none in this window" : `in last ${days} days`
+          }
+          subtle={newPatients === 0}
         />
-        <KpiCard
-          Icon={Receipt}
+        <KpiCell
           label="Outstanding"
           value={formatCents(outstandingCents)}
-          sub={
+          tone={overdueCount > 0 ? "warning" : "default"}
+          meta={
             overdueCount > 0
               ? `${overdueCount} overdue`
               : outstandingInvoices.length === 0
-                ? "All paid up"
+                ? "all paid up"
                 : `${outstandingInvoices.length} open`
           }
-          tone={overdueCount > 0 ? "warning" : undefined}
+          subtle={outstandingInvoices.length === 0}
         />
-      </section>
+      </KpiGrid>
 
-      {payments.length === 0 &&
-      appointmentsInRange.length === 0 &&
-      treatments.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">No activity yet</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Once payments, appointments, and treatments start landing in this
-              window, you&apos;ll see breakdowns here.
-            </p>
-          </CardContent>
-        </Card>
+      {noActivity ? (
+        <section className="border border-border bg-card p-6">
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            No activity yet
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Once payments, appointments, and treatments start landing in this
+            window, you&apos;ll see breakdowns here.
+          </p>
+        </section>
       ) : (
-        <ReportsCharts
-          revenueSeries={revenueSeries}
-          appointmentsPerDentist={appointmentsPerDentist}
-          topProcedures={topProcedures}
-          bucketByMonth={bucketByMonth}
-        />
+        <>
+          {/* Revenue */}
+          <section className="flex flex-col gap-3">
+            <PageHead
+              variant="section"
+              crumb={`/ revenue / ${bucketByMonth ? "monthly" : "daily"}`}
+              title="Revenue"
+            />
+            <div className="border border-border bg-card p-4 sm:p-6">
+              <RevenueChart revenueSeries={revenueSeries} />
+            </div>
+          </section>
+
+          {/* Appointments per dentist */}
+          <section className="flex flex-col gap-3">
+            <PageHead
+              variant="section"
+              crumb="/ appointments / per dentist"
+              title="Appointments per dentist"
+            />
+            <div className="border border-border bg-card p-4 sm:p-6">
+              <AppointmentsPerDentistChart
+                appointmentsPerDentist={appointmentsPerDentist}
+              />
+            </div>
+          </section>
+
+          {/* Top procedures */}
+          <section className="flex flex-col gap-3">
+            <PageHead
+              variant="section"
+              crumb="/ procedures / top by volume"
+              title="Top procedures"
+            />
+            <div className="border border-border bg-card p-4 sm:p-6">
+              <TopProceduresChart topProcedures={topProcedures} />
+            </div>
+          </section>
+        </>
       )}
+
+      <Plate
+        left={`Reports · ${label.toLowerCase()}`}
+        right={`revenue ${formatCents(totalRevenueCents)} · ${appointmentsInRange.length} appts`}
+      />
     </div>
   );
 }
 
-function KpiCard({
-  Icon,
-  label,
-  value,
-  sub,
-  tone,
-}: {
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  label: string;
-  value: string;
-  sub?: string;
-  tone?: "warning";
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-start gap-3 py-5">
-        <span
-          className={
-            tone === "warning"
-              ? "grid size-9 place-items-center rounded-md bg-warning/10 text-warning"
-              : "grid size-9 place-items-center rounded-md bg-primary/10 text-primary"
-          }
-        >
-          <Icon className="size-4" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-          <p className="text-2xl font-semibold">{value}</p>
-          {sub ? (
-            <p className="truncate text-xs text-muted-foreground">{sub}</p>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ---------- helpers ----------
+/* ─── Helpers ─────────────────────────────────────────────────── */
 
 function dayKey(d: Date): string {
   const y = d.getFullYear();
@@ -293,7 +323,6 @@ function formatMonthLabel(key: string): string {
 }
 
 function shortName(full: string): string {
-  // "Dr. Dana Dentist" -> "Dr. Dana D." for chart labels.
   const parts = full.trim().split(/\s+/);
   if (parts.length <= 2) return full;
   return `${parts.slice(0, -1).join(" ")} ${parts.at(-1)![0]}.`;

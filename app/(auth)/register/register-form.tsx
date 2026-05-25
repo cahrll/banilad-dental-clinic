@@ -21,6 +21,9 @@ import {
 import { registerPatientAction } from "@/lib/auth/actions";
 import { initialAuthState, toFieldErrors } from "@/lib/auth/form-state";
 
+const MONO_LABEL =
+  "font-mono text-[11px] uppercase tracking-wider text-muted-foreground";
+
 export function RegisterForm() {
   const [state, action, pending] = useActionState(registerPatientAction, initialAuthState);
 
@@ -57,9 +60,7 @@ export function RegisterForm() {
 
         <div className="grid grid-cols-2 gap-3">
           <Field data-invalid={!!state.fieldErrors?.sex}>
-            <FieldLabel htmlFor="sex">Sex</FieldLabel>
-            {/* defaultValue is intentionally undefined: Radix Select treats "" as a real value
-                and re-renders incorrectly when nullable backing data lands in it. */}
+            <FieldLabel htmlFor="sex" className={MONO_LABEL}>Sex</FieldLabel>
             <Select name="sex" defaultValue={undefined}>
               <SelectTrigger id="sex" aria-invalid={!!state.fieldErrors?.sex}>
                 <SelectValue placeholder="Select" />
@@ -117,7 +118,12 @@ export function RegisterForm() {
           errors={state.fieldErrors?.confirmPassword}
         />
 
-        <Button type="submit" disabled={pending} className="w-full" size="lg">
+        <Button
+          type="submit"
+          disabled={pending}
+          className="w-full font-mono text-xs uppercase tracking-wider"
+          size="lg"
+        >
           {pending ? "Creating account…" : "Create account"}
         </Button>
       </FieldGroup>
@@ -145,7 +151,9 @@ function TextField({
   const hasErrors = !!errors?.length;
   return (
     <Field data-invalid={hasErrors}>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <FieldLabel htmlFor={id} className={MONO_LABEL}>
+        {label}
+      </FieldLabel>
       <Input
         id={id}
         name={id}

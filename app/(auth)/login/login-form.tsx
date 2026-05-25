@@ -8,6 +8,10 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { loginAction } from "@/lib/auth/actions";
 import { initialAuthState, toFieldErrors } from "@/lib/auth/form-state";
 
+
+const MONO_LABEL =
+  "font-mono text-[11px] uppercase tracking-wider text-muted-foreground";
+
 export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(loginAction, initialAuthState);
 
@@ -23,7 +27,7 @@ export function LoginForm({ next }: { next?: string }) {
         ) : null}
 
         <Field data-invalid={!!state.fieldErrors?.email}>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <FieldLabel htmlFor="email" className={MONO_LABEL}>Email</FieldLabel>
           <Input
             id="email"
             name="email"
@@ -36,7 +40,7 @@ export function LoginForm({ next }: { next?: string }) {
         </Field>
 
         <Field data-invalid={!!state.fieldErrors?.password}>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <FieldLabel htmlFor="password" className={MONO_LABEL}>Password</FieldLabel>
           <Input
             id="password"
             name="password"
@@ -48,7 +52,12 @@ export function LoginForm({ next }: { next?: string }) {
           <FieldError errors={toFieldErrors(state.fieldErrors?.password)} />
         </Field>
 
-        <Button type="submit" disabled={pending} className="w-full" size="lg">
+        <Button
+          type="submit"
+          disabled={pending}
+          className="w-full font-mono text-xs uppercase tracking-wider"
+          size="lg"
+        >
           {pending ? "Signing in…" : "Sign in"}
         </Button>
       </FieldGroup>

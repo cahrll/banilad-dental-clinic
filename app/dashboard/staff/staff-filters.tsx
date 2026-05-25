@@ -4,7 +4,6 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -63,32 +62,39 @@ export function StaffFilters({
             placeholder="Search by name or email…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="pl-8"
+            className="h-9 rounded-[2px] pl-8 font-mono text-[12px]"
             data-pending={isPending || undefined}
           />
         </div>
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger
+            size="sm"
+            className="h-9 w-full rounded-[2px] font-mono text-[11px] uppercase tracking-wider sm:w-44"
+          >
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="rounded-[2px]">
             {ROLE_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
+              <SelectItem
+                key={o.value}
+                value={o.value}
+                className="font-mono text-[12px]"
+              >
                 {o.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      <Label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+      <label className="flex cursor-pointer items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
         <input
           type="checkbox"
           checked={showInactive}
           onChange={(e) => setShowInactive(e.target.checked)}
-          className="size-4 rounded border-input"
+          className="size-3.5 rounded-[2px] border-input accent-primary"
         />
         Show inactive
-      </Label>
+      </label>
     </div>
   );
 }

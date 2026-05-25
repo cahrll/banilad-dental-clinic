@@ -1,11 +1,21 @@
-import { Stethoscope } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import {
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerNum,
+  LedgerName,
+  LedgerMeta,
+  LedgerAmt,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
 
 export const metadata = { title: "My treatments · Banilad Dental Clinic" };
+
+const COLS = "110px minmax(0,1.4fr) minmax(0,1.2fr) 110px";
 
 export default async function PatientTreatmentsPage() {
   const { user } = await requirePatient();
@@ -17,13 +27,11 @@ export default async function PatientTreatmentsPage() {
 
   if (!patient || patient.deletedAt) {
     return (
-      <div className="space-y-6">
-        <PageHeader title="My treatments" />
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Your patient record isn&apos;t set up yet. Please contact the clinic.
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-6">
+        <PageHead crumb="/ treatments" title="My treatments" />
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          Your patient record isn&apos;t set up yet. Please contact the clinic.
+        </p>
       </div>
     );
   }
@@ -42,55 +50,56 @@ export default async function PatientTreatmentsPage() {
     },
   });
 
+  const totalCents = treatments.reduce((acc, t) => acc + t.feeCents, 0);
+
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-8">
+      <PageHead
+        crumb="/ treatments"
         title="My treatments"
         description="Procedures performed at the clinic."
       />
 
       {treatments.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-              <Stethoscope className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm font-medium">No treatments yet.</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              Procedures recorded by your dentist will show here.
-            </p>
-          </CardContent>
-        </Card>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          No treatments yet. Procedures recorded by your dentist will show here.
+        </p>
       ) : (
-        <div className="space-y-2">
+        <Ledger>
+          <LedgerHead
+            cols={COLS}
+            labels={[
+              "Date",
+              "Procedure",
+              "Teeth · dentist",
+              { label: "Fee", align: "right" },
+            ]}
+          />
           {treatments.map((t) => {
             const teeth = t.toothEntries
               .map((e) => e.toothNumber)
               .sort((a, b) => a - b);
+            const teethLabel = teeth.length === 0 ? "—" : teeth.join(", ");
             return (
-              <Card key={t.id}>
-                <CardContent className="flex flex-wrap items-start justify-between gap-3 py-4">
-                  <div className="space-y-1">
-                    <p className="font-medium">{t.procedure}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(t.performedAt)} · {t.dentist.user.name}
-                      {teeth.length > 0
-                        ? ` · Teeth ${teeth.join(", ")}`
-                        : ""}
-                    </p>
-                    {t.diagnosis ? (
-                      <p className="text-sm">{t.diagnosis}</p>
-                    ) : null}
-                  </div>
-                  <div className="text-right text-sm font-medium">
-                    {formatCents(t.feeCents)}
-                  </div>
-                </CardContent>
-              </Card>
+              <LedgerRow key={t.id} cols={COLS}>
+                <LedgerNum>{formatDate(t.performedAt)}</LedgerNum>
+                <LedgerName sub={t.diagnosis ? `· ${t.diagnosis}` : undefined}>
+                  {t.procedure}
+                </LedgerName>
+                <LedgerMeta>
+                  {teethLabel} · {t.dentist.user.name}
+                </LedgerMeta>
+                <LedgerAmt>{formatCents(t.feeCents)}</LedgerAmt>
+              </LedgerRow>
             );
           })}
-        </div>
+        </Ledger>
       )}
+
+      <Plate
+        left="Treatments · clinical history"
+        right={treatments.length > 0 ? `total ${formatCents(totalCents)}` : "—"}
+      />
     </div>
   );
 }

@@ -1,11 +1,4 @@
-import { UserRound } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead, Plate } from "@/components/app/carbon";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 
@@ -35,31 +28,34 @@ export default async function PatientProfilePage() {
 
   if (!patient || patient.deletedAt) {
     return (
-      <div className="space-y-6">
-        <PageHeader title="My profile" />
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Your patient record isn&apos;t set up yet. Please contact the clinic.
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-6">
+        <PageHead crumb="/ profile" title="My profile" />
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          Your patient record isn&apos;t set up yet. Please contact the clinic.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-10">
+      <PageHead
+        crumb="/ profile"
         title="My profile"
         description="Your account and clinic record. Contact the clinic to update any of these details."
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Section title="Account">
+      <section className="flex flex-col gap-3">
+        <PageHead variant="section" crumb="§ 01 / account" title="Account" />
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <Row label="Name" value={user.name} />
           <Row label="Email" value={user.email} />
-        </Section>
+        </div>
+      </section>
 
-        <Section title="Personal">
+      <section className="flex flex-col gap-3">
+        <PageHead variant="section" crumb="§ 02 / personal" title="Personal" />
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           <Row
             label="Full name"
             value={`${patient.firstName} ${patient.lastName}`}
@@ -69,59 +65,52 @@ export default async function PatientProfilePage() {
             label="Date of birth"
             value={`${formatDate(patient.dateOfBirth)} · ${ageInYears(patient.dateOfBirth)} yrs`}
           />
-        </Section>
+        </div>
+      </section>
 
-        <Section title="Contact">
+      <section className="flex flex-col gap-3">
+        <PageHead variant="section" crumb="§ 03 / contact" title="Contact" />
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <Row label="Phone" value={patient.phone} />
           <Row label="Address" value={patient.address} multiline />
-        </Section>
+        </div>
+      </section>
 
-        <Section title="Emergency contact">
+      <section className="flex flex-col gap-3">
+        <PageHead
+          variant="section"
+          crumb="§ 04 / emergency"
+          title="Emergency contact"
+        />
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <Row label="Name" value={patient.emergencyContactName} />
           <Row label="Phone" value={patient.emergencyContactPhone} />
-        </Section>
+        </div>
+      </section>
 
-        <Section title="Medical">
+      <section className="flex flex-col gap-3">
+        <PageHead variant="section" crumb="§ 05 / medical" title="Medical" />
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <Row label="History" value={patient.medicalHistory} multiline />
           <Row label="Allergies" value={patient.allergies} multiline />
-        </Section>
+        </div>
+      </section>
 
-        <Section title="Insurance">
+      <section className="flex flex-col gap-3">
+        <PageHead variant="section" crumb="§ 06 / insurance" title="Insurance" />
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
           <Row label="Provider" value={patient.insuranceProvider} />
           <Row label="Policy #" value={patient.insurancePolicyNo} />
-        </Section>
-      </div>
+        </div>
+      </section>
 
-      <Card>
-        <CardContent className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
-          <UserRound
-            className="size-5 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
-          <p>
-            To update your contact details, allergies, or insurance, message the
-            front desk and reception will keep your record current.
-          </p>
-        </CardContent>
-      </Card>
+      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+        To update any of these details, message the front desk and reception
+        will keep your record current.
+      </p>
+
+      <Plate left="Profile · my record" right={user.email} />
     </div>
-  );
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">{children}</CardContent>
-    </Card>
   );
 }
 
@@ -136,13 +125,19 @@ function Row({
 }) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/80">
         {label}
       </p>
       {value ? (
-        <p className={multiline ? "whitespace-pre-wrap" : "truncate"}>{value}</p>
+        <p
+          className={
+            multiline ? "mt-0.5 whitespace-pre-wrap" : "mt-0.5 truncate"
+          }
+        >
+          {value}
+        </p>
       ) : (
-        <p className="text-muted-foreground">—</p>
+        <p className="mt-0.5 text-muted-foreground">—</p>
       )}
     </div>
   );

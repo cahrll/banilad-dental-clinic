@@ -21,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 const ICONS = {
   layout: LayoutDashboard,
@@ -42,6 +43,7 @@ export type NavItem = {
   href: string;
   label: string;
   icon: NavIconName;
+  count?: string;
 };
 
 export function SidebarNav({ items }: { items: NavItem[] }) {
@@ -53,10 +55,32 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
         const active = isActive(pathname, item.href);
         return (
           <SidebarMenuItem key={item.href}>
-            <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+            <SidebarMenuButton
+              asChild
+              isActive={active}
+              tooltip={item.label}
+              className={cn(
+                "h-8 gap-2.5 rounded-[2px] px-2.5 py-1.5 text-[13px] tracking-[-0.005em]",
+                "data-active:bg-sidebar-primary data-active:font-semibold data-active:text-sidebar-primary-foreground",
+              )}
+            >
               <Link href={item.href}>
-                <Icon aria-hidden />
-                <span>{item.label}</span>
+                <Icon aria-hidden className="size-4 opacity-80" />
+                <span className="flex-1 truncate">{item.label}</span>
+                {item.count ? (
+                  <span
+                    aria-hidden
+                    data-tabular
+                    className={cn(
+                      "font-mono text-[10px] tabular-nums tracking-wider",
+                      active
+                        ? "text-sidebar-primary-foreground/75"
+                        : "text-muted-foreground/70",
+                    )}
+                  >
+                    {item.count}
+                  </span>
+                ) : null}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

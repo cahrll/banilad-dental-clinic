@@ -1,13 +1,21 @@
-import Link from "next/link";
-import { Receipt } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
-import { InvoiceStatusBadge } from "@/components/app/invoice-status-badge";
+import {
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerNum,
+  LedgerAmt,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
+import { cn } from "@/lib/utils";
+import type { InvoiceStatus } from "@/generated/prisma/client";
 
 export const metadata = { title: "My invoices · Banilad Dental Clinic" };
+
+const COLS = "110px 110px 110px minmax(0,1fr) 90px";
 
 export default async function PatientInvoicesPage() {
   const { user } = await requirePatient();
@@ -16,21 +24,23 @@ export default async function PatientInvoicesPage() {
     where: { userId: user.id },
     select: { id: true },
   });
+
   if (!patient) {
     return (
-      <div className="space-y-6">
-        <PageHeader title="My invoices" />
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Your patient record isn&apos;t set up yet. Please contact the clinic.
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-6">
+        <PageHead crumb="/ invoices" title="My invoices" />
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          Your patient record isn&apos;t set up yet. Please contact the clinic.
+        </p>
       </div>
     );
   }
 
   const invoices = await prisma.invoice.findMany({
-    where: { patientId: patient.id, status: { in: ["ISSUED", "PARTIAL", "PAID", "VOID"] } },
+    where: {
+      patientId: patient.id,
+      status: { in: ["ISSUED", "PARTIAL", "PAID", "VOID"] },
+    },
     orderBy: { issuedAt: "desc" },
     select: {
       id: true,
@@ -43,58 +53,92 @@ export default async function PatientInvoicesPage() {
     },
   });
 
+  const totalOutstanding = invoices.reduce((acc, inv) => {
+    const paid = inv.payments.reduce((s, p) => s + p.amountCents, 0);
+    return acc + Math.max(0, inv.totalCents - paid);
+  }, 0);
+
   return (
-    <div className="space-y-6">
-      <PageHeader title="My invoices" description="Issued invoices and balances." />
+    <div className="flex flex-col gap-8">
+      <PageHead
+        crumb="/ invoices"
+        title="My invoices"
+        description="Issued invoices and balances."
+      />
 
       {invoices.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-              <Receipt className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm font-medium">No invoices yet.</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              Invoices will show here once the clinic issues them.
-            </p>
-          </CardContent>
-        </Card>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          No invoices yet. They&apos;ll show here once the clinic issues them.
+        </p>
       ) : (
-        <div className="space-y-2">
+        <Ledger>
+          <LedgerHead
+            cols={COLS}
+            labels={[
+              "Invoice",
+              "Issued",
+              "Due",
+              { label: "Total", align: "right" },
+              { label: "Status", align: "right" },
+            ]}
+          />
           {invoices.map((inv) => {
             const paid = inv.payments.reduce((acc, p) => acc + p.amountCents, 0);
             const balance = Math.max(0, inv.totalCents - paid);
             return (
-              <Card key={inv.id}>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-                  <div className="space-y-1">
-                    <Link
-                      href={`/portal/invoices/${inv.id}`}
-                      className="font-mono text-sm font-medium underline-offset-4 hover:underline"
-                    >
-                      {inv.number}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      {inv.issuedAt ? `Issued ${formatDate(inv.issuedAt)}` : "—"}
-                      {inv.dueAt ? ` · Due ${formatDate(inv.dueAt)}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <InvoiceStatusBadge status={inv.status} />
-                    <div className="text-right text-sm">
-                      <p className="font-medium">{formatCents(inv.totalCents)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {balance > 0 ? `${formatCents(balance)} due` : "Settled"}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <LedgerRow
+                key={inv.id}
+                cols={COLS}
+                href={`/portal/invoices/${inv.id}`}
+              >
+                <LedgerNum>{inv.number}</LedgerNum>
+                <LedgerNum>
+                  {inv.issuedAt ? formatDate(inv.issuedAt) : "—"}
+                </LedgerNum>
+                <LedgerNum>{inv.dueAt ? formatDate(inv.dueAt) : "—"}</LedgerNum>
+                <LedgerAmt
+                  balance={balance > 0 ? `bal ${formatCents(balance)}` : "settled"}
+                  tone={balance > 0 ? "warning" : "success"}
+                >
+                  {formatCents(inv.totalCents)}
+                </LedgerAmt>
+                <InvoiceStatusInk status={inv.status} />
+              </LedgerRow>
             );
           })}
-        </div>
+        </Ledger>
       )}
+
+      <Plate
+        left="Invoices · billing history"
+        right={
+          totalOutstanding > 0
+            ? `${formatCents(totalOutstanding)} outstanding`
+            : "all settled"
+        }
+      />
     </div>
+  );
+}
+
+const INVOICE_STATUS_TONE: Record<InvoiceStatus, string> = {
+  DRAFT: "text-muted-foreground",
+  ISSUED: "text-info",
+  PARTIAL: "text-warning",
+  PAID: "text-success",
+  VOID: "text-muted-foreground line-through",
+};
+
+function InvoiceStatusInk({ status }: { status: InvoiceStatus }) {
+  return (
+    <span
+      className={cn(
+        "text-right font-mono text-[10px] uppercase tracking-wider",
+        INVOICE_STATUS_TONE[status],
+      )}
+    >
+      {status.toLowerCase()}
+    </span>
   );
 }
 

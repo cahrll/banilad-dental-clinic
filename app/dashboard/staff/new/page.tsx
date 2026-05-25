@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requireRole } from "@/lib/auth/guards";
 import { StaffForm } from "../staff-form";
 
@@ -13,13 +13,14 @@ export default async function NewStaffPage() {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href="/dashboard/staff">
           <ChevronLeft aria-hidden /> Back to staff
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb="/ staff / new"
         title="New staff member"
         description="Create an admin, dentist, or receptionist account. They sign in with the email and initial password you set."
       />

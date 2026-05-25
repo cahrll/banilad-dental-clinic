@@ -1,26 +1,27 @@
 import Link from "next/link";
-import { AlertTriangle, Package, Plus } from "lucide-react";
+import { AlertTriangle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PageHeader } from "@/components/app/page-header";
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerName,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import { InventorySearchInput } from "./search-input";
 import { InventoryShowInactiveToggle } from "./show-inactive-toggle";
 
 export const metadata = { title: "Inventory · Banilad Dental Clinic" };
 
 type SearchParams = { q?: string; inactive?: string };
+
+const COLS =
+  "minmax(0,2fr) 100px 70px 70px 110px 90px";
 
 export default async function InventoryListPage({
   searchParams,
@@ -65,12 +66,17 @@ export default async function InventoryListPage({
   ).length;
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-8">
+      <PageHead
+        crumb={`/ inventory${query ? ` / "${query}"` : ""}`}
         title="Inventory"
         description={`${items.length}${items.length === 200 ? "+" : ""} item${items.length === 1 ? "" : "s"}${lowStockCount > 0 ? ` · ${lowStockCount} at or below reorder point` : ""}`}
         actions={
-          <Button asChild size="sm">
+          <Button
+            asChild
+            size="sm"
+            className="font-mono text-[11px] uppercase tracking-wider"
+          >
             <Link href="/dashboard/inventory/new">
               <Plus aria-hidden /> New item
             </Link>
@@ -84,78 +90,74 @@ export default async function InventoryListPage({
       </div>
 
       {items.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-              <Package className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm font-medium">No items found.</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              {query ? "Try a different search term." : "Add your first item to start tracking stock."}
-            </p>
-            {!query ? (
-              <Button asChild className="mt-2">
-                <Link href="/dashboard/inventory/new">Add item</Link>
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          {query
+            ? "No matches. Try a different search."
+            : "No items yet. Add your first to start tracking stock."}
+        </p>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">SKU</TableHead>
-                <TableHead className="text-right">Stock</TableHead>
-                <TableHead className="hidden md:table-cell text-right">Reorder at</TableHead>
-                <TableHead className="hidden md:table-cell text-right">Unit cost</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((it) => {
-                const low = it.isActive && it.stockOnHand <= it.reorderPoint;
-                return (
-                  <TableRow key={it.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/dashboard/inventory/${it.id}`}
-                        className="underline-offset-4 hover:underline"
-                      >
-                        {it.name}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">{it.unit}</p>
-                    </TableCell>
-                    <TableCell className="hidden font-mono text-xs sm:table-cell">
-                      {it.sku ?? <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className={low ? "font-semibold text-amber-600 dark:text-amber-400" : ""}>
-                        {it.stockOnHand}
-                      </span>
-                      {low ? (
-                        <span className="ml-1 inline-flex items-center align-middle text-amber-600 dark:text-amber-400">
-                          <AlertTriangle className="size-3.5" aria-label="Low stock" />
-                        </span>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="hidden text-right md:table-cell text-muted-foreground">
-                      {it.reorderPoint}
-                    </TableCell>
-                    <TableCell className="hidden text-right md:table-cell">
-                      {formatCents(it.unitCostCents)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {it.isActive ? <Badge>Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <Ledger>
+          <LedgerHead
+            cols={COLS}
+            labels={[
+              "Item",
+              "SKU",
+              { label: "Stock", align: "right" },
+              { label: "Reorder", align: "right" },
+              { label: "Unit cost", align: "right" },
+              { label: "Status", align: "right" },
+            ]}
+          />
+          {items.map((it) => {
+            const low = it.isActive && it.stockOnHand <= it.reorderPoint;
+            return (
+              <LedgerRow
+                key={it.id}
+                cols={COLS}
+                href={`/dashboard/inventory/${it.id}`}
+              >
+                <LedgerName sub={`· ${it.unit}`}>{it.name}</LedgerName>
+                <span className="truncate font-mono text-xs uppercase tracking-wider tabular-nums text-muted-foreground">
+                  {it.sku ?? "—"}
+                </span>
+                <span
+                  className={cn(
+                    "text-right font-mono text-sm tabular-nums",
+                    low ? "font-semibold text-warning" : "",
+                  )}
+                >
+                  {it.stockOnHand}
+                  {low ? (
+                    <AlertTriangle
+                      aria-label="Low stock"
+                      className="ml-1 inline-block size-3 align-baseline text-warning"
+                    />
+                  ) : null}
+                </span>
+                <span className="text-right font-mono text-sm tabular-nums text-muted-foreground">
+                  {it.reorderPoint}
+                </span>
+                <span className="text-right font-mono text-sm tabular-nums text-muted-foreground">
+                  {formatCents(it.unitCostCents)}
+                </span>
+                <span
+                  className={cn(
+                    "text-right font-mono text-[10px] uppercase tracking-wider",
+                    it.isActive ? "text-success" : "text-muted-foreground",
+                  )}
+                >
+                  {it.isActive ? "Active" : "Inactive"}
+                </span>
+              </LedgerRow>
+            );
+          })}
+        </Ledger>
       )}
+
+      <Plate
+        left="Inventory · stock register"
+        right={`${items.length} item${items.length === 1 ? "" : "s"} listed · ${lowStockCount} low`}
+      />
     </div>
   );
 }

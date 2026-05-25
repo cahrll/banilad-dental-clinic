@@ -1,20 +1,18 @@
 import Link from "next/link";
-import { Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PageHeader } from "@/components/app/page-header";
-import { InvoiceStatusBadge } from "@/components/app/invoice-status-badge";
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerNum,
+  LedgerName,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import type { InvoiceStatus } from "@/generated/prisma/client";
 
 export const metadata = { title: "Billing · Banilad Dental Clinic" };
@@ -22,6 +20,16 @@ export const metadata = { title: "Billing · Banilad Dental Clinic" };
 const STATUSES: InvoiceStatus[] = ["DRAFT", "ISSUED", "PARTIAL", "PAID", "VOID"];
 
 type SearchParams = { status?: string };
+
+const COLS = "110px minmax(0,1.4fr) 90px 130px 130px 110px";
+
+const STATUS_TONE: Record<InvoiceStatus, string> = {
+  DRAFT: "text-muted-foreground",
+  ISSUED: "text-info",
+  PARTIAL: "text-warning",
+  PAID: "text-success",
+  VOID: "text-muted-foreground line-through",
+};
 
 export default async function BillingListPage({
   searchParams,
@@ -54,8 +62,9 @@ export default async function BillingListPage({
   });
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-8">
+      <PageHead
+        crumb={`/ billing${filter ? ` / ${filter.toLowerCase()}` : ""}`}
         title="Billing"
         description={`${invoices.length}${invoices.length === 100 ? "+" : ""} invoice${invoices.length === 1 ? "" : "s"}${filter ? ` · ${filter.toLowerCase()}` : ""}`}
       />
@@ -73,75 +82,77 @@ export default async function BillingListPage({
       </div>
 
       {invoices.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-              <Receipt className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm font-medium">No invoices found.</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              Open a patient and create an invoice from the Invoices tab.
-            </p>
-          </CardContent>
-        </Card>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          No invoices found. Open a patient and create an invoice from the
+          Invoices section.
+        </p>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Number</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead className="hidden sm:table-cell">Status</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
-                <TableHead className="hidden md:table-cell">Issued</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((inv) => {
-                const paid = inv.payments.reduce((acc, p) => acc + p.amountCents, 0);
-                const balance = Math.max(0, inv.totalCents - paid);
-                return (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-mono text-xs">
-                      <Link
-                        href={`/dashboard/billing/${inv.id}`}
-                        className="underline-offset-4 hover:underline"
-                      >
-                        {inv.number}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/dashboard/patients/${inv.patient.id}`}
-                        className="underline-offset-4 hover:underline"
-                      >
-                        {inv.patient.lastName}, {inv.patient.firstName}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <InvoiceStatusBadge status={inv.status} />
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCents(inv.totalCents)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {balance === 0 && inv.totalCents > 0 ? (
-                        <span className="text-muted-foreground">Settled</span>
-                      ) : (
-                        formatCents(balance)
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {inv.issuedAt ? formatDate(inv.issuedAt) : <span className="text-muted-foreground">—</span>}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <Ledger>
+          <LedgerHead
+            cols={COLS}
+            labels={[
+              "Invoice",
+              "Patient",
+              { label: "Status", align: "right" },
+              { label: "Total", align: "right" },
+              { label: "Balance", align: "right" },
+              "Issued",
+            ]}
+          />
+          {invoices.map((inv) => {
+            const paid = inv.payments.reduce(
+              (acc, p) => acc + p.amountCents,
+              0,
+            );
+            const balance = Math.max(0, inv.totalCents - paid);
+            return (
+              <LedgerRow
+                key={inv.id}
+                cols={COLS}
+                href={`/dashboard/billing/${inv.id}`}
+              >
+                <LedgerNum>{inv.number}</LedgerNum>
+                <LedgerName>
+                  {inv.patient.lastName}, {inv.patient.firstName}
+                </LedgerName>
+                <span
+                  className={cn(
+                    "text-right font-mono text-[10px] uppercase tracking-wider",
+                    STATUS_TONE[inv.status],
+                  )}
+                >
+                  {inv.status.toLowerCase()}
+                </span>
+                <span className="text-right font-mono text-sm tabular-nums">
+                  {formatCents(inv.totalCents)}
+                </span>
+                <span
+                  className={cn(
+                    "text-right font-mono text-sm tabular-nums",
+                    balance === 0 && inv.totalCents > 0
+                      ? "text-muted-foreground"
+                      : balance > 0
+                        ? "text-warning"
+                        : "",
+                  )}
+                >
+                  {balance === 0 && inv.totalCents > 0
+                    ? "settled"
+                    : formatCents(balance)}
+                </span>
+                <LedgerNum>
+                  {inv.issuedAt ? formatDate(inv.issuedAt) : "—"}
+                </LedgerNum>
+              </LedgerRow>
+            );
+          })}
+        </Ledger>
       )}
+
+      <Plate
+        left={`Billing · ${filter ? filter.toLowerCase() : "all"}`}
+        right={`${invoices.length} invoice${invoices.length === 1 ? "" : "s"} listed`}
+      />
     </div>
   );
 }
@@ -156,7 +167,12 @@ function FilterPill({
   active: boolean;
 }) {
   return (
-    <Button asChild variant={active ? "default" : "outline"} size="sm">
+    <Button
+      asChild
+      variant={active ? "default" : "outline"}
+      size="sm"
+      className="rounded-[2px] font-mono text-[11px] uppercase tracking-wider"
+    >
       <Link href={href}>{label}</Link>
     </Button>
   );

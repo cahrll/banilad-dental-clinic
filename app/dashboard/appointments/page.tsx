@@ -2,13 +2,15 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { addDays, endOfDay, startOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import {
+  LaneKey,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import {
   CALENDAR_DAY_END_HOUR,
-  formatDateLong,
   isoDateInput,
   rangeForWeek,
   weekDays,
@@ -117,60 +119,63 @@ export default async function AppointmentsPage({
   });
   const dayToday = appendQuery({ dentistId });
 
+  const weekIso = isoDateInput(start);
+  const selectedDentist =
+    dentistId && dentists.find((d) => d.id === dentistId)?.user.name;
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Appointments"
-        description={`Week of ${formatDateLong(start)}`}
+    <div className="flex flex-col gap-6">
+      <PageHead
+        crumb={`/ appointments / week-of ${weekIso}${selectedDentist ? ` / ${selectedDentist.toLowerCase()}` : ""}`}
+        title="Schedule"
         actions={
-          <Button asChild size="sm">
-            <Link href="/dashboard/appointments/new">
-              <Plus aria-hidden /> New appointment
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="hidden items-center gap-1 md:flex">
+              <StrideButton href={weekPrev} ariaLabel="Previous week">
+                <ChevronLeft aria-hidden />
+              </StrideButton>
+              <StrideButton href={weekToday}>Today</StrideButton>
+              <StrideButton href={weekNext} ariaLabel="Next week">
+                <ChevronRight aria-hidden />
+              </StrideButton>
+            </div>
+            <div className="flex items-center gap-1 md:hidden">
+              <StrideButton href={dayPrev} ariaLabel="Previous day">
+                <ChevronLeft aria-hidden />
+              </StrideButton>
+              <StrideButton href={dayToday}>Today</StrideButton>
+              <StrideButton href={dayNext} ariaLabel="Next day">
+                <ChevronRight aria-hidden />
+              </StrideButton>
+            </div>
+            <DentistFilter
+              dentists={dentists.map((d) => ({ id: d.id, name: d.user.name }))}
+              selected={dentistId}
+            />
+            <Button
+              asChild
+              size="sm"
+              className="font-mono text-[11px] uppercase tracking-wider"
+            >
+              <Link href="/dashboard/appointments/new">
+                <Plus aria-hidden /> Appointment
+              </Link>
+            </Button>
+          </div>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="hidden items-center gap-2 md:flex">
-          <Button asChild variant="outline" size="sm">
-            <Link href={weekPrev}>
-              <ChevronLeft aria-hidden /> Prev
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={weekToday}>Today</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={weekNext}>
-              Next <ChevronRight aria-hidden />
-            </Link>
-          </Button>
-        </div>
-        <div className="flex items-center gap-2 md:hidden">
-          <Button asChild variant="outline" size="sm">
-            <Link href={dayPrev}>
-              <ChevronLeft aria-hidden /> Prev
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={dayToday}>Today</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={dayNext}>
-              Next <ChevronRight aria-hidden />
-            </Link>
-          </Button>
-        </div>
-        <div className="ms-auto">
-          <DentistFilter
-            dentists={dentists.map((d) => ({ id: d.id, name: d.user.name }))}
-            selected={dentistId}
-          />
-        </div>
-      </div>
+      <LaneKey
+        items={[
+          { label: "Scheduled", dotClass: "bg-warning" },
+          { label: "Confirmed", dotClass: "bg-info" },
+          { label: "Completed", dotClass: "bg-success" },
+          { label: "Cancelled", dotClass: "bg-muted-foreground/60" },
+          { label: "No-show", dotClass: "bg-destructive" },
+        ]}
+      />
 
-      <Card className="overflow-hidden p-0 gap-0">
+      <div className="border border-border bg-card">
         <WeekGrid
           days={days}
           selectedDay={selectedDay}
@@ -188,8 +193,36 @@ export default async function AppointmentsPage({
             dentistName: a.dentist.user.name,
           }))}
         />
-      </Card>
+      </div>
+
+      <Plate
+        left={`Schedule · week of ${weekIso}`}
+        right={`${appointments.length} ${appointments.length === 1 ? "appointment" : "appointments"} in view`}
+      />
     </div>
+  );
+}
+
+function StrideButton({
+  href,
+  children,
+  ariaLabel,
+}: {
+  href: string;
+  children: React.ReactNode;
+  ariaLabel?: string;
+}) {
+  return (
+    <Button
+      asChild
+      variant="outline"
+      size="sm"
+      className="h-8 px-2.5 font-mono text-[11px] uppercase tracking-wider"
+    >
+      <Link href={href} aria-label={ariaLabel}>
+        {children}
+      </Link>
+    </Button>
   );
 }
 

@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { PatientBookForm } from "./patient-book-form";
@@ -26,12 +26,12 @@ export default async function PortalNewAppointmentPage() {
   if (!patient || patient.deletedAt) {
     return (
       <div className="space-y-6">
-        <Button asChild variant="ghost" size="sm" className="w-fit">
+        <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
           <Link href="/portal/appointments">
             <ChevronLeft aria-hidden /> Back to my appointments
           </Link>
         </Button>
-        <PageHeader title="Book appointment" />
+        <PageHead crumb="/ portal / appointments / book" title="Book appointment" />
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Your patient record isn&apos;t set up yet. Please contact the clinic.
@@ -48,13 +48,14 @@ export default async function PortalNewAppointmentPage() {
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href="/portal/appointments">
           <ChevronLeft aria-hidden /> Back to my appointments
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb="/ portal / appointments / book"
         title="Book appointment"
         description="Choose a dentist, then pick an available time. We'll confirm shortly after booking."
       />

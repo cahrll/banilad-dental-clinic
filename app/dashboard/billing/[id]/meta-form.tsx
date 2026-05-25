@@ -49,7 +49,7 @@ export function MetaForm({
             <AlertDescription>{state.error}</AlertDescription>
           </Alert>
         ) : state.ok ? (
-          <p className="text-xs text-emerald-700 dark:text-emerald-400">Saved.</p>
+          <p className="text-xs text-success">Saved.</p>
         ) : null}
 
         <input type="hidden" name="discountCents" value={decimalToCents(discount)} />

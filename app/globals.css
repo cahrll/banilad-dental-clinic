@@ -61,29 +61,26 @@
 }
 
 :root {
-  /* Neutrals (cool gray, ~hue 247) — light mode reads top-down */
-  --background: oklch(0.985 0.002 247);
-  --foreground: oklch(0.18 0.012 247);
+  
+  --background: oklch(0.974 0.006 270);
+  --foreground: oklch(0.18 0.020 268);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.012 247);
+  --card-foreground: oklch(0.18 0.020 268);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.012 247);
+  --popover-foreground: oklch(0.18 0.020 268);
+  --primary: oklch(0.42 0.18 268);
+  --primary-foreground: oklch(0.985 0.004 268);
 
-  /* Brand accent — teal (hue ~195) */
-  --primary: oklch(0.58 0.115 195);
-  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.955 0.006 270);
+  --secondary-foreground: oklch(0.24 0.018 268);
 
-  --secondary: oklch(0.965 0.003 247);
-  --secondary-foreground: oklch(0.25 0.012 247);
+  --muted: oklch(0.955 0.006 270);
+  --muted-foreground: oklch(0.46 0.014 268);
 
-  --muted: oklch(0.965 0.003 247);
-  --muted-foreground: oklch(0.508 0.012 247);
 
-  /* `accent` is a hover/surface tone in shadcn, not the brand accent */
-  --accent: oklch(0.965 0.003 247);
-  --accent-foreground: oklch(0.25 0.012 247);
+  --accent: oklch(0.955 0.006 270);
+  --accent-foreground: oklch(0.24 0.018 268);
 
-  /* Status colors — hue-matched dark variants for text-on-soft-bg use */
   --destructive: oklch(0.55 0.20 25);
   --destructive-foreground: oklch(0.99 0 0);
   --success: oklch(0.50 0.13 155);
@@ -93,20 +90,21 @@
   --info: oklch(0.55 0.14 245);
   --info-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.918 0.005 247);
-  --input: oklch(0.918 0.005 247);
-  --ring: oklch(0.58 0.115 195);
 
-  /* Charts: brand accent + supporting hues, mode-tuned */
-  --chart-1: oklch(0.58 0.115 195);
-  --chart-2: oklch(0.62 0.14 245);
-  --chart-3: oklch(0.65 0.14 290);
-  --chart-4: oklch(0.70 0.15 75);
-  --chart-5: oklch(0.62 0.14 155);
+  --border: oklch(0.90 0.006 270);
+  --input: oklch(0.90 0.006 270);
+  --ring: oklch(0.42 0.18 268);
 
-  --radius: 0.5rem;
 
-  /* Tooth condition tokens — dental chart uses these via data-status */
+  --chart-1: oklch(0.42 0.18 268);
+  --chart-2: oklch(0.55 0.16 245);
+  --chart-3: oklch(0.58 0.15 305);
+  --chart-4: oklch(0.62 0.14 75);
+  --chart-5: oklch(0.55 0.13 155);
+
+  --radius: 0.125rem;
+
+
   --tooth-healthy: oklch(0.62 0.14 155);
   --tooth-healthy-soft: oklch(0.94 0.05 155);
   --tooth-caries: oklch(0.72 0.16 75);
@@ -124,36 +122,37 @@
   --tooth-extracted: oklch(0.55 0.005 247);
   --tooth-extracted-soft: oklch(0.92 0.003 247);
 
-  --sidebar: oklch(0.985 0.002 247);
-  --sidebar-foreground: oklch(0.18 0.012 247);
-  --sidebar-primary: oklch(0.58 0.115 195);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.95 0.005 247);
-  --sidebar-accent-foreground: oklch(0.25 0.012 247);
-  --sidebar-border: oklch(0.918 0.005 247);
-  --sidebar-ring: oklch(0.58 0.115 195);
+
+  --sidebar: oklch(0.962 0.008 270);
+  --sidebar-foreground: oklch(0.18 0.020 268);
+  --sidebar-primary: oklch(0.42 0.18 268);
+  --sidebar-primary-foreground: oklch(0.985 0.004 268);
+  --sidebar-accent: oklch(0.94 0.008 270);
+  --sidebar-accent-foreground: oklch(0.24 0.018 268);
+  --sidebar-border: oklch(0.90 0.006 270);
+  --sidebar-ring: oklch(0.42 0.18 268);
 }
 
 .dark {
-  --background: oklch(0.18 0.010 247);
-  --foreground: oklch(0.97 0.003 247);
-  --card: oklch(0.235 0.010 247);
-  --card-foreground: oklch(0.97 0.003 247);
-  --popover: oklch(0.235 0.010 247);
-  --popover-foreground: oklch(0.97 0.003 247);
 
-  /* Lighter teal for dark surfaces — passes AA on neutral-900 */
-  --primary: oklch(0.74 0.110 195);
-  --primary-foreground: oklch(0.15 0.015 195);
+  --background: oklch(0.17 0.012 268);
+  --foreground: oklch(0.96 0.006 268);
+  --card: oklch(0.215 0.012 268);
+  --card-foreground: oklch(0.96 0.006 268);
+  --popover: oklch(0.215 0.012 268);
+  --popover-foreground: oklch(0.96 0.006 268);
 
-  --secondary: oklch(0.27 0.010 247);
-  --secondary-foreground: oklch(0.97 0.003 247);
+  --primary: oklch(0.70 0.16 268);
+  --primary-foreground: oklch(0.14 0.02 268);
 
-  --muted: oklch(0.27 0.010 247);
-  --muted-foreground: oklch(0.72 0.008 247);
+  --secondary: oklch(0.255 0.012 268);
+  --secondary-foreground: oklch(0.96 0.006 268);
 
-  --accent: oklch(0.27 0.010 247);
-  --accent-foreground: oklch(0.97 0.003 247);
+  --muted: oklch(0.255 0.012 268);
+  --muted-foreground: oklch(0.70 0.012 268);
+
+  --accent: oklch(0.255 0.012 268);
+  --accent-foreground: oklch(0.96 0.006 268);
 
   --destructive: oklch(0.74 0.16 25);
   --destructive-foreground: oklch(0.16 0.04 25);
@@ -164,15 +163,15 @@
   --info: oklch(0.76 0.13 245);
   --info-foreground: oklch(0.15 0.04 245);
 
-  --border: oklch(1 0 0 / 8%);
+  --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.74 0.110 195);
+  --ring: oklch(0.70 0.16 268);
 
-  --chart-1: oklch(0.74 0.110 195);
+  --chart-1: oklch(0.70 0.16 268);
   --chart-2: oklch(0.76 0.13 245);
-  --chart-3: oklch(0.78 0.13 290);
-  --chart-4: oklch(0.82 0.14 85);
-  --chart-5: oklch(0.78 0.12 155);
+  --chart-3: oklch(0.78 0.13 305);
+  --chart-4: oklch(0.80 0.13 80);
+  --chart-5: oklch(0.74 0.12 155);
 
   --tooth-healthy: oklch(0.74 0.13 155);
   --tooth-healthy-soft: oklch(0.30 0.06 155);
@@ -191,14 +190,14 @@
   --tooth-extracted: oklch(0.50 0.005 247);
   --tooth-extracted-soft: oklch(0.25 0.005 247);
 
-  --sidebar: oklch(0.145 0.010 247);
-  --sidebar-foreground: oklch(0.97 0.003 247);
-  --sidebar-primary: oklch(0.74 0.110 195);
-  --sidebar-primary-foreground: oklch(0.15 0.015 195);
-  --sidebar-accent: oklch(0.235 0.010 247);
-  --sidebar-accent-foreground: oklch(0.97 0.003 247);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.74 0.110 195);
+  --sidebar: oklch(0.135 0.012 268);
+  --sidebar-foreground: oklch(0.96 0.006 268);
+  --sidebar-primary: oklch(0.70 0.16 268);
+  --sidebar-primary-foreground: oklch(0.14 0.02 268);
+  --sidebar-accent: oklch(0.215 0.012 268);
+  --sidebar-accent-foreground: oklch(0.96 0.006 268);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.70 0.16 268);
 }
 
 @layer base {
@@ -207,18 +206,18 @@
   }
   body {
     @apply bg-background text-foreground text-sm;
-    font-feature-settings: "cv11", "ss01";
   }
   html {
     @apply font-sans;
   }
-  /* Numeric tabular figures on tables, money, calendar times */
+  
   [data-slot="table-cell"],
   [data-slot="table-head"],
   [data-tabular] {
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "cv01", "tnum";
   }
-  /* Tooth condition tones — driven by data-status on the chart buttons */
+  
   [data-tooth-status="HEALTHY"] {
     background-color: var(--tooth-healthy-soft);
     color: var(--tooth-healthy);
@@ -263,7 +262,7 @@
   }
 }
 
-/* Print: always render light tokens regardless of selected theme */
+
 @media print {
   :root,
   .dark {
@@ -285,5 +284,17 @@
   body {
     background: #ffffff !important;
     color: #000000 !important;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }

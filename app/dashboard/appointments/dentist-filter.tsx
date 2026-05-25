@@ -30,13 +30,18 @@ export function DentistFilter({
         router.replace(q ? `?${q}` : "?");
       }}
     >
-      <SelectTrigger className="w-[220px]">
+      <SelectTrigger
+        size="sm"
+        className="h-8 w-[200px] rounded-[2px] font-mono text-[11px] uppercase tracking-wider"
+      >
         <SelectValue placeholder="All dentists" />
       </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">All dentists</SelectItem>
+      <SelectContent className="rounded-[2px]">
+        <SelectItem value="all" className="font-mono text-[12px]">
+          All dentists
+        </SelectItem>
         {dentists.map((d) => (
-          <SelectItem key={d.id} value={d.id}>
+          <SelectItem key={d.id} value={d.id} className="text-[13px]">
             {d.name}
           </SelectItem>
         ))}

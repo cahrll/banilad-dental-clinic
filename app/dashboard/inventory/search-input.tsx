@@ -36,7 +36,7 @@ export function InventorySearchInput({ defaultValue }: { defaultValue: string })
         placeholder="Search by name, SKU, or supplier…"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="pl-8"
+        className="h-9 rounded-[2px] pl-8 font-mono text-[12px]"
         data-pending={isPending || undefined}
       />
     </div>
