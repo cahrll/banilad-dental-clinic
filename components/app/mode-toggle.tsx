@@ -19,6 +19,10 @@ export function ModeToggle({ compact = false, className }: ModeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    // Synchronizing client-only state (next-themes reads localStorage after
+    // mount). The set is intentional — runs once to flip the mount guard so
+    // the active cell can paint without SSR hydration mismatch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

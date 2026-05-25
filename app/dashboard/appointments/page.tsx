@@ -23,8 +23,6 @@ export const metadata = { title: "Appointments · Banilad Dental Clinic" };
 
 type SearchParams = { week?: string; date?: string; dentistId?: string };
 
-const HUE_COUNT = 5;
-
 export default async function AppointmentsPage({
   searchParams,
 }: {
@@ -48,8 +46,6 @@ export default async function AppointmentsPage({
   const dayRangeStart = startOfDay(selectedDay);
   const dayRangeEnd = endOfDay(selectedDay);
 
-  // Fetch the union of both ranges so the same payload feeds both views
-  // (CSS picks which view renders, no JS branching during render).
   const fetchStart =
     dayRangeStart < weekRangeStart ? dayRangeStart : weekRangeStart;
   const fetchEnd = dayRangeEnd > weekRangeEnd ? dayRangeEnd : weekRangeEnd;
@@ -79,17 +75,7 @@ export default async function AppointmentsPage({
     }),
   ]);
 
-  // Hue map only matters in combined view — when filtered to one dentist,
-  // the colour is redundant. Sorted dentist order keeps the assignment stable.
-  const dentistHueByDentistId = dentistId
-    ? null
-    : Object.fromEntries(
-        dentists.map((d, i) => [d.id, (i % HUE_COUNT) + 1]),
-      );
 
-  // Auto-extend the grid only when an appointment ends past the default end hour
-  // (e.g. legacy / seed-produced over-runs). Real production data can't trigger
-  // this — the booking picker enforces the 17:00 ceiling.
   const latestEndHour = appointments.reduce((max, a) => {
     const end = a.endsAt;
     const hour = end.getHours() + (end.getMinutes() > 0 ? 1 : 0);
@@ -97,8 +83,7 @@ export default async function AppointmentsPage({
   }, CALENDAR_DAY_END_HOUR);
   const effectiveEndHour = Math.min(24, Math.max(CALENDAR_DAY_END_HOUR, latestEndHour));
 
-  // Prev/Today/Next render two link sets (week-stride for ≥md, day-stride for <md);
-  // CSS hides the inactive one so semantics follow the visible view.
+
   const weekPrev = appendQuery({
     week: isoDateInput(addDays(start, -7)),
     dentistId,
@@ -180,7 +165,7 @@ export default async function AppointmentsPage({
           days={days}
           selectedDay={selectedDay}
           endHour={effectiveEndHour}
-          dentistHueByDentistId={dentistHueByDentistId}
+          multiDentist={!dentistId}
           appointments={appointments.map((a) => ({
             id: a.id,
             startsAt: a.startsAt.toISOString(),

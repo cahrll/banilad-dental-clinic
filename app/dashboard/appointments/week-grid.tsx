@@ -35,10 +35,10 @@ type LaidOutAppointment = LaneLayout<{
   appointment: CalendarAppointment;
 }>;
 
-const HOUR_HEIGHT_PX = 72; // each hour row — sized for 2-3 lines of card text
+const HOUR_HEIGHT_PX = 72;
 const SLOT_MINUTES = 60;
 const LANE_GAP_PX = 2;
-const COMPACT_BLOCK_THRESHOLD_PX = 44; // short blocks collapse to name-only
+const COMPACT_BLOCK_THRESHOLD_PX = 44;
 
 type RenderTier = "veryNarrow" | "narrow" | "short" | "full";
 
@@ -55,24 +55,18 @@ export function WeekGrid({
   selectedDay,
   endHour,
   appointments,
-  dentistHueByDentistId,
+  multiDentist,
 }: {
   days: Date[];
   selectedDay: Date;
   endHour: number;
   appointments: CalendarAppointment[];
-  dentistHueByDentistId: Record<string, number> | null;
+  multiDentist: boolean;
 }) {
   const [selected, setSelected] = useState<CalendarAppointment | null>(null);
-  // Live wall-clock for the now-line and NOW tag. Initialized in useEffect
-  // (not during render) to avoid hydration mismatch — DESIGN.md mandates this
-  // for any current-time UI.
+
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
-    // Synchronizing wall-clock state with React. Mount-time `setNow(new Date())`
-    // is intentional — we need the initial value AND the 60s interval. The
-    // null-then-Date dance is required to avoid SSR hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
@@ -87,7 +81,7 @@ export function WeekGrid({
           days={days}
           totalHours={totalHours}
           appointments={appointments}
-          dentistHueByDentistId={dentistHueByDentistId}
+          multiDentist={multiDentist}
           now={now}
           onSelect={setSelected}
         />
@@ -97,7 +91,7 @@ export function WeekGrid({
           day={selectedDay}
           totalHours={totalHours}
           appointments={appointments}
-          dentistHueByDentistId={dentistHueByDentistId}
+          multiDentist={multiDentist}
           now={now}
           onSelect={setSelected}
         />
@@ -118,14 +112,14 @@ function WeekView({
   days,
   totalHours,
   appointments,
-  dentistHueByDentistId,
+  multiDentist,
   now,
   onSelect,
 }: {
   days: Date[];
   totalHours: number;
   appointments: CalendarAppointment[];
-  dentistHueByDentistId: Record<string, number> | null;
+  multiDentist: boolean;
   now: Date | null;
   onSelect: (a: CalendarAppointment) => void;
 }) {
@@ -168,7 +162,7 @@ function WeekView({
             day={day}
             totalHours={totalHours}
             appointments={appointments}
-            dentistHueByDentistId={dentistHueByDentistId}
+            multiDentist={multiDentist}
             now={now}
             onSelect={onSelect}
           />
@@ -182,14 +176,14 @@ function DayView({
   day,
   totalHours,
   appointments,
-  dentistHueByDentistId,
+  multiDentist,
   now,
   onSelect,
 }: {
   day: Date;
   totalHours: number;
   appointments: CalendarAppointment[];
-  dentistHueByDentistId: Record<string, number> | null;
+  multiDentist: boolean;
   now: Date | null;
   onSelect: (a: CalendarAppointment) => void;
 }) {
@@ -225,7 +219,7 @@ function DayView({
           day={day}
           totalHours={totalHours}
           appointments={appointments}
-          dentistHueByDentistId={dentistHueByDentistId}
+          multiDentist={multiDentist}
           now={now}
           onSelect={onSelect}
         />
@@ -258,14 +252,14 @@ function DayColumn({
   day,
   totalHours,
   appointments,
-  dentistHueByDentistId,
+  multiDentist,
   now,
   onSelect,
 }: {
   day: Date;
   totalHours: number;
   appointments: CalendarAppointment[];
-  dentistHueByDentistId: Record<string, number> | null;
+  multiDentist: boolean;
   now: Date | null;
   onSelect: (a: CalendarAppointment) => void;
 }) {
@@ -282,8 +276,7 @@ function DayColumn({
     })),
   );
 
-  // Current-time line: only when this column is today AND now is within
-  // business hours. Position in pixels from the column top.
+  
   const isToday = now ? isSameDay(day, now) : false;
   const nowTop = (() => {
     if (!now || !isToday) return null;
@@ -313,11 +306,7 @@ function DayColumn({
           end={e.endsAt}
           lane={e.lane}
           lanes={e.lanes}
-          dentistHueIndex={
-            dentistHueByDentistId
-              ? (dentistHueByDentistId[e.appointment.dentistId] ?? null)
-              : null
-          }
+          multiDentist={multiDentist}
           now={now}
           onClick={() => onSelect(e.appointment)}
         />
@@ -340,7 +329,7 @@ function AppointmentBlock({
   end,
   lane,
   lanes,
-  dentistHueIndex,
+  multiDentist,
   now,
   onClick,
 }: {
@@ -349,7 +338,7 @@ function AppointmentBlock({
   end: Date;
   lane: number;
   lanes: number;
-  dentistHueIndex: number | null;
+  multiDentist: boolean;
   now: Date | null;
   onClick: () => void;
 }) {
@@ -377,10 +366,6 @@ function AppointmentBlock({
     left: `calc(${leftPct}% + 4px)`,
     width: `calc(${widthPct}% - ${LANE_GAP_PX + 4}px)`,
   };
-  const hueVar =
-    dentistHueIndex != null && !isNow
-      ? `var(--chart-${dentistHueIndex})`
-      : null;
 
   const statusLabel = APPOINTMENT_STATUS_LABELS[appointment.status];
   const showTimeLine =
@@ -391,6 +376,8 @@ function AppointmentBlock({
     (tier === "short" || tier === "full") &&
     appointment.status !== "SCHEDULED" &&
     !isNow;
+
+  const showInitialsChip = multiDentist && !isNow && tier !== "veryNarrow";
 
   const tooltip = `${appointment.patientName} · ${formatTime(start)}${
     end ? ` – ${formatTime(end)}` : ""
@@ -404,13 +391,8 @@ function AppointmentBlock({
       className={cn(
         "absolute overflow-hidden border px-2 py-1.5 text-left text-xs leading-tight transition-colors",
         tone,
-        hueVar && "border-l-[3px]",
       )}
-      style={
-        hueVar
-          ? { ...positionStyle, borderLeftColor: hueVar }
-          : positionStyle
-      }
+      style={positionStyle}
       aria-label={`${appointment.patientName} with ${appointment.dentistName} at ${formatTime(start)}`}
     >
       <p className="flex items-center gap-1 truncate font-medium leading-tight">
@@ -421,12 +403,6 @@ function AppointmentBlock({
           >
             Now
           </span>
-        ) : hueVar ? (
-          <span
-            aria-hidden
-            className="inline-block size-1.5 shrink-0 rounded-full"
-            style={{ backgroundColor: hueVar }}
-          />
         ) : null}
         <span className="truncate">{appointment.patientName}</span>
       </p>
@@ -443,6 +419,16 @@ function AppointmentBlock({
         <p className="mt-0.5 truncate font-mono text-[10px] uppercase leading-tight tracking-wider opacity-80">
           {statusLabel}
         </p>
+      ) : null}
+      {showInitialsChip ? (
+        <span
+          aria-hidden
+          data-tabular
+          title={appointment.dentistName}
+          className="absolute top-1 right-1 inline-flex items-center justify-center border border-border bg-background px-1 py-px font-mono text-[9px] uppercase tracking-wider text-muted-foreground"
+        >
+          {dentistInitials(appointment.dentistName)}
+        </span>
       ) : null}
     </button>
   );
@@ -467,6 +453,19 @@ function blockTone(status: AppointmentStatus): string {
 
 function formatHourLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
+}
+
+
+function dentistInitials(name: string): string {
+  const tokens = name
+    .trim()
+    .split(/\s+/)
+    .filter((t) => !/^dr\.?$/i.test(t));
+  if (tokens.length === 0) return "?";
+  if (tokens.length === 1) return tokens[0].slice(0, 2).toUpperCase();
+  return (
+    (tokens[0][0] ?? "") + (tokens[tokens.length - 1][0] ?? "")
+  ).toUpperCase();
 }
 
 // Re-export the badge for use in detail dialog without opening a separate file.
