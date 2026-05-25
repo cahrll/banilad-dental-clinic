@@ -8,8 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         data-tabular
         className="border-t border-border px-6 py-4 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
       >
-        Banilad <span className="text-foreground/30">/</span> clinic ·
-        operatory carbon
+        Banilad <span className="text-foreground/30">/</span> clinic
       </footer>
     </div>
   );

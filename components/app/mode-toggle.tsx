@@ -1,37 +1,59 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
-export function ModeToggle() {
-  const { setTheme } = useTheme();
+type ModeToggleProps = {
+  compact?: boolean;
+  className?: string;
+};
+
+const OPTIONS = [
+  { value: "light", label: "Light", Icon: Sun },
+  { value: "dark", label: "Dark", Icon: Moon },
+] as const;
+
+export function ModeToggle({ compact = false, className }: ModeToggleProps) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label="Toggle theme">
-          <Sun className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-          <Moon className="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => setTheme("light")}>
-          <Sun /> Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme("dark")}>
-          <Moon /> Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setTheme("system")}>
-          <Monitor /> System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div
+      role="radiogroup"
+      aria-label="Color theme"
+      className={cn(
+        "inline-flex gap-px border border-border bg-border",
+        className,
+      )}
+    >
+      {OPTIONS.map(({ value, label, Icon }) => {
+        const active = mounted && resolvedTheme === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={`${label} theme`}
+            onClick={() => setTheme(value)}
+            className={cn(
+              "inline-flex items-center justify-center gap-1.5 font-mono text-[11px] uppercase tracking-wider outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring/50",
+              compact ? "h-7 w-7 p-0" : "min-w-[5.5rem] flex-1 px-2 py-1.5",
+              active
+                ? "bg-primary text-primary-foreground"
+                : "bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <Icon aria-hidden className="size-3.5" />
+            {!compact ? <span>{label}</span> : null}
+          </button>
+        );
+      })}
+    </div>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { CheckIcon, ChevronsUpDown, LogOut, Monitor, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -19,6 +18,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { logoutAction } from "@/lib/auth/actions";
+import { ModeToggle } from "./mode-toggle";
 import { RoleBadge } from "./role-badge";
 import type { Role } from "@/generated/prisma/client";
 
@@ -32,7 +32,6 @@ export function SidebarUserMenu({
   role: Role;
 }) {
   const { isMobile } = useSidebar();
-  const { theme = "system", setTheme } = useTheme();
   const [pending, start] = useTransition();
   const initials = computeInitials(name);
 
@@ -92,36 +91,9 @@ export function SidebarUserMenu({
             <DropdownMenuLabel className="font-mono text-[10px] font-normal uppercase tracking-wider text-muted-foreground">
               Theme
             </DropdownMenuLabel>
-            <DropdownMenuItem
-              onSelect={() => setTheme("light")}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Sun />
-                Light
-              </div>
-              {theme === "light" && <CheckIcon />}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => setTheme("dark")}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Moon />
-                Dark
-              </div>
-              {theme === "dark" && <CheckIcon />}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => setTheme("system")}
-              className="flex items-center justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Monitor />
-                System
-              </div>
-              {theme === "system" && <CheckIcon />}
-            </DropdownMenuItem>
+            <div className="px-2 pb-1.5">
+              <ModeToggle className="flex w-full" />
+            </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               disabled={pending}

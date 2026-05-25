@@ -39,7 +39,7 @@ export default async function Home() {
           </span>
         </Link>
         <div className="flex items-center gap-2">
-          <ModeToggle />
+          <ModeToggle compact />
           {session && targetHref && targetLabel ? (
             <Button
               asChild
@@ -105,23 +105,13 @@ export default async function Home() {
                 <Link href={targetHref}>{targetLabel}</Link>
               </Button>
             ) : (
-              <>
-                <Button
-                  asChild
-                  size="lg"
-                  className="rounded-[2px] font-mono text-[11px] uppercase tracking-wider"
-                >
-                  <Link href="/register">Create patient account</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="rounded-[2px] font-mono text-[11px] uppercase tracking-wider"
-                >
-                  <Link href="/login">Staff sign in</Link>
-                </Button>
-              </>
+              <Button
+                asChild
+                size="lg"
+                className="rounded-[2px] font-mono text-[11px] uppercase tracking-wider"
+              >
+                <Link href="/register">Book your first visit →</Link>
+              </Button>
             )}
           </div>
         </section>
