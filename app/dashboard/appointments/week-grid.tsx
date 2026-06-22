@@ -12,7 +12,7 @@ import {
   AppointmentStatusBadge,
   APPOINTMENT_STATUS_LABELS,
 } from "@/components/app/status-badge";
-import type { AppointmentStatus } from "@/generated/prisma/client";
+import type { AppointmentStatus } from "@prisma/client";
 import { assignLanes, type LaneLayout } from "@/lib/calendar-layout";
 import { AppointmentDetailDialog } from "./appointment-detail-dialog";
 

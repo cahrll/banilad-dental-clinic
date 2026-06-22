@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { AppointmentStatus } from "@/generated/prisma/client";
+import type { AppointmentStatus } from "@prisma/client";
 
 const labels: Record<AppointmentStatus, string> = {
   SCHEDULED: "Scheduled",

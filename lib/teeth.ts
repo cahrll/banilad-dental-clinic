@@ -4,7 +4,7 @@
 //   Quadrant 3 = lower left   (31..38)
 //   Quadrant 4 = lower right  (41..48)
 
-import type { ToothStatus } from "@/generated/prisma/client";
+import type { ToothStatus } from "@prisma/client";
 
 export const UPPER_RIGHT = [18, 17, 16, 15, 14, 13, 12, 11] as const; // distal → mesial
 export const UPPER_LEFT = [21, 22, 23, 24, 25, 26, 27, 28] as const;

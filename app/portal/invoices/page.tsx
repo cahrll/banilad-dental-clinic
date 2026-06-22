@@ -11,7 +11,7 @@ import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import type { InvoiceStatus } from "@/generated/prisma/client";
+import type { InvoiceStatus } from "@prisma/client";
 
 export const metadata = { title: "My invoices · Banilad Dental Clinic" };
 

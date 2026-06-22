@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppointmentStatusBadge } from "@/components/app/status-badge";
 import { setAppointmentStatusAction } from "@/lib/actions/appointments";
 import { formatDateTime } from "@/lib/datetime";
-import type { AppointmentStatus } from "@/generated/prisma/client";
+import type { AppointmentStatus } from "@prisma/client";
 import type { CalendarAppointment } from "./week-grid";
 
 const NEXT_STATUSES: Record<AppointmentStatus, AppointmentStatus[]> = {

@@ -15,7 +15,7 @@ import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
-import type { AppointmentStatus } from "@/generated/prisma/client";
+import type { AppointmentStatus } from "@prisma/client";
 import { CancelButton } from "./cancel-button";
 
 export const metadata = { title: "My appointments · Banilad Dental Clinic" };

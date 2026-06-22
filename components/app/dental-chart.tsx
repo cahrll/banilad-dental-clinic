@@ -11,7 +11,7 @@ import {
   UPPER_RIGHT,
   type ToothConditionMap,
 } from "@/lib/teeth";
-import type { ToothStatus } from "@/generated/prisma/client";
+import type { ToothStatus } from "@prisma/client";
 
 export type DentalChartMode = "view" | "select";
 

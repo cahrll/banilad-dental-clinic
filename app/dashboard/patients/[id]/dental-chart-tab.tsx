@@ -34,7 +34,7 @@ import {
 } from "@/lib/teeth";
 import { setToothConditionAction } from "@/lib/actions/treatments";
 import { initialConditionActionState } from "@/lib/auth/form-state";
-import type { ToothStatus } from "@/generated/prisma/client";
+import type { ToothStatus } from "@prisma/client";
 
 export function DentalChartTab({
   patientId,

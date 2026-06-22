@@ -14,7 +14,7 @@ import type {
   InventoryActionState,
   InventoryFormState,
 } from "@/lib/auth/form-state";
-import type { StockMovementType } from "@/generated/prisma/client";
+import type { StockMovementType } from "@prisma/client";
 
 function parseIntField(formData: FormData, name: string): number | null {
   const raw = formData.get(name);

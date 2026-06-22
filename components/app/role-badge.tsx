@@ -1,4 +1,4 @@
-import type { Role } from "@/generated/prisma/client";
+import type { Role } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 
 const labels: Record<Role, string> = {

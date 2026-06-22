@@ -3,7 +3,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/db";
 import { readSessionCookie } from "./cookies";
 import { hashToken } from "./tokens";
-import type { Role } from "@/generated/prisma/client";
+import type { Role } from "@prisma/client";
 
 export type CurrentUser = {
   id: string;

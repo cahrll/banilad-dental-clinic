@@ -28,7 +28,7 @@ import {
   PageHead,
   Plate,
 } from "@/components/app/carbon";
-import type { AppointmentStatus } from "@/generated/prisma/client";
+import type { AppointmentStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Dashboard · Banilad Dental Clinic" };

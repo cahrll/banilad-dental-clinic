@@ -20,7 +20,7 @@ import {
 import { logoutAction } from "@/lib/auth/actions";
 import { ModeToggle } from "./mode-toggle";
 import { RoleBadge } from "./role-badge";
-import type { Role } from "@/generated/prisma/client";
+import type { Role } from "@prisma/client";
 
 export function SidebarUserMenu({
   name,

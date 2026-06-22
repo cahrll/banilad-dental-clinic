@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
-import type { Role } from "@/generated/prisma/client";
+import type { Role } from "@prisma/client";
 import { Toaster } from "@/components/ui/sonner";
 import {
   Sidebar,

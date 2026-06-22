@@ -1,4 +1,4 @@
-import type { Role } from "@/generated/prisma/client";
+import type { Role } from "@prisma/client";
 
 // Edge-safe: pure constants/types only. No Prisma client, no Node-only APIs.
 // Importable from proxy.ts and lib/auth/guards.ts.

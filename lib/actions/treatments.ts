@@ -9,7 +9,7 @@ import {
   TreatmentCreateSchema,
   ToothConditionSchema,
 } from "@/lib/validators/treatment";
-import type { ToothStatus } from "@/generated/prisma/client";
+import type { ToothStatus } from "@prisma/client";
 import type {
   ConditionActionState,
   TreatmentFormState,

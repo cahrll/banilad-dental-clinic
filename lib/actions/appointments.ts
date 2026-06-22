@@ -17,7 +17,7 @@ import type {
   AppointmentFormState,
   StatusActionState,
 } from "@/lib/auth/form-state";
-import type { AppointmentStatus } from "@/generated/prisma/client";
+import type { AppointmentStatus } from "@prisma/client";
 
 // ----- Staff: create appointment -----
 

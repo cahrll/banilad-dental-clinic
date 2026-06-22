@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import type {
   AppointmentStatus,
   InvoiceStatus,
-} from "@/generated/prisma/client";
+} from "@prisma/client";
 import {
   ArchiveButton,
   HardDeleteButton,

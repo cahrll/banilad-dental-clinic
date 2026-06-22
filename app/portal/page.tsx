@@ -17,7 +17,7 @@ import { prisma } from "@/lib/db";
 import { firstName, cn } from "@/lib/utils";
 import { formatCents } from "@/lib/money";
 import { formatDateTime } from "@/lib/datetime";
-import type { AppointmentStatus } from "@/generated/prisma/client";
+import type { AppointmentStatus } from "@prisma/client";
 
 export const metadata = { title: "My portal · Banilad Dental Clinic" };
 

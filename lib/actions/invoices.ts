@@ -15,7 +15,7 @@ import type {
   InvoiceActionState,
   InvoiceFormState,
 } from "@/lib/auth/form-state";
-import type { InvoiceStatus, PaymentMethod } from "@/generated/prisma/client";
+import type { InvoiceStatus, PaymentMethod } from "@prisma/client";
 
 // ----- Helpers -----
 

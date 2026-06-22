@@ -14,7 +14,7 @@ import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { StaffFilters } from "./staff-filters";
-import type { Role } from "@/generated/prisma/client";
+import type { Role } from "@prisma/client";
 
 export const metadata = { title: "Staff · Banilad Dental Clinic" };
 
