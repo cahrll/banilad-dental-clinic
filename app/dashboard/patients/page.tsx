@@ -1,25 +1,26 @@
 import Link from "next/link";
-import { Plus, UserRound } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PageHeader } from "@/components/app/page-header";
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerName,
+  LedgerMeta,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { cn } from "@/lib/utils";
 import { SearchInput } from "./search-input";
 import { ShowArchivedToggle } from "./show-archived-toggle";
 
 export const metadata = { title: "Patients · Banilad Dental Clinic" };
 
 type SearchParams = { q?: string; archived?: string };
+
+const COLS = "minmax(0,1.6fr) minmax(0,1.4fr) 130px 130px 90px";
 
 export default async function PatientsPage({
   searchParams,
@@ -62,12 +63,17 @@ export default async function PatientsPage({
   });
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-8">
+      <PageHead
+        crumb={`/ patients${showArchived ? " / + archived" : ""}${query ? ` / "${query}"` : ""}`}
         title="Patients"
-        description={`${patients.length}${patients.length === 100 ? "+" : ""} ${showArchived ? "records (including archived)" : "active records"}`}
+        description={`${patients.length}${patients.length === 100 ? "+" : ""} ${showArchived ? "records · including archived" : "active records"}`}
         actions={
-          <Button asChild>
+          <Button
+            asChild
+            size="sm"
+            className="font-mono text-[11px] uppercase tracking-wider"
+          >
             <Link href="/dashboard/patients/new">
               <Plus aria-hidden /> New patient
             </Link>
@@ -81,73 +87,64 @@ export default async function PatientsPage({
       </div>
 
       {patients.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-              <UserRound className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm font-medium">No patients found.</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              {query
-                ? "Try a different search term."
-                : "Add your first patient to get started."}
-            </p>
-            {!query ? (
-              <Button asChild className="mt-2">
-                <Link href="/dashboard/patients/new">Add patient</Link>
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          {query
+            ? "No matches. Try a different search term."
+            : "No patients yet. Add your first to get started."}
+        </p>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Email</TableHead>
-                <TableHead className="hidden md:table-cell">Date of birth</TableHead>
-                <TableHead className="hidden md:table-cell">Phone</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {patients.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium">
-                    <Link
-                      href={`/dashboard/patients/${p.id}`}
-                      className="underline-offset-4 hover:underline"
-                    >
-                      {p.lastName}, {p.firstName}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground sm:table-cell">
-                    {p.user.email.startsWith("noportal-") ? (
-                      <span className="italic text-muted-foreground/70">No portal login</span>
-                    ) : (
-                      p.user.email
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {formatDate(p.dateOfBirth)}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {p.phone ?? <span className="text-muted-foreground">—</span>}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {p.deletedAt ? (
-                      <Badge variant="secondary">Archived</Badge>
-                    ) : (
-                      <Badge>Active</Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        <Ledger>
+          <LedgerHead
+            cols={COLS}
+            labels={[
+              "Name",
+              "Email",
+              "Date of birth",
+              "Phone",
+              { label: "Status", align: "right" },
+            ]}
+          />
+          {patients.map((p) => {
+            const archivedFlag = !!p.deletedAt;
+            const portalEmail = p.user.email.startsWith("noportal-")
+              ? null
+              : p.user.email;
+            return (
+              <LedgerRow
+                key={p.id}
+                cols={COLS}
+                href={`/dashboard/patients/${p.id}`}
+              >
+                <LedgerName>
+                  {p.lastName}, {p.firstName}
+                </LedgerName>
+                <LedgerMeta>
+                  {portalEmail ?? <span className="italic">No portal login</span>}
+                </LedgerMeta>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {formatDate(p.dateOfBirth)}
+                </span>
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                  {p.phone ?? "—"}
+                </span>
+                <span
+                  className={cn(
+                    "text-right font-mono text-[10px] uppercase tracking-wider",
+                    archivedFlag ? "text-muted-foreground" : "text-success",
+                  )}
+                >
+                  {archivedFlag ? "Archived" : "Active"}
+                </span>
+              </LedgerRow>
+            );
+          })}
+        </Ledger>
       )}
+
+      <Plate
+        left="Patients · roster"
+        right={`${patients.length} listed${patients.length === 100 ? " (capped)" : ""}`}
+      />
     </div>
   );
 }

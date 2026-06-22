@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { NewAppointmentForm } from "./new-appointment-form";
@@ -50,13 +50,14 @@ export default async function NewAppointmentPage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href={backHref}>
           <ChevronLeft aria-hidden /> {backLabel}
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb="/ appointments / new"
         title="New appointment"
         description={
           initialPatient

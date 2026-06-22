@@ -1,21 +1,22 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, ChevronLeft, Pencil } from "lucide-react";
+import { ChevronLeft, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PageHeader } from "@/components/app/page-header";
+  KpiGrid,
+  KpiCell,
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerNum,
+  LedgerMeta,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import { RecordMovementDialog } from "./record-movement-dialog";
 import { ToggleActiveButton } from "./toggle-active-button";
 import { DeleteItemButton } from "./delete-item-button";
@@ -33,6 +34,8 @@ const MOVEMENT_TONE: Record<string, string> = {
   OUT: "text-destructive",
   ADJUSTMENT: "text-warning",
 };
+
+const MOVEMENT_COLS = "150px 110px 70px minmax(0,1.4fr) minmax(0,1fr)";
 
 export default async function InventoryItemDetailPage({
   params,
@@ -77,22 +80,36 @@ export default async function InventoryItemDetailPage({
   const isAdmin = currentUser.role === "ADMIN";
 
   return (
-    <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+    <div className="flex flex-col gap-10">
+      <Button
+        asChild
+        variant="ghost"
+        size="sm"
+        className="w-fit font-mono text-[11px] uppercase tracking-wider"
+      >
         <Link href="/dashboard/inventory">
           <ChevronLeft aria-hidden /> Back to inventory
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb={`/ inventory / ${item.sku ?? slug(item.name)}`}
         title={item.name}
         description={item.sku ? `SKU ${item.sku}` : item.supplier ?? undefined}
         actions={
           <div className="flex flex-wrap gap-2">
             {item.isActive ? (
-              <RecordMovementDialog itemId={item.id} stockOnHand={item.stockOnHand} />
+              <RecordMovementDialog
+                itemId={item.id}
+                stockOnHand={item.stockOnHand}
+              />
             ) : null}
-            <Button asChild variant="outline" size="sm">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="font-mono text-[11px] uppercase tracking-wider"
+            >
               <Link href={`/dashboard/inventory/${item.id}/edit`}>
                 <Pencil aria-hidden /> Edit
               </Link>
@@ -103,115 +120,99 @@ export default async function InventoryItemDetailPage({
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className={low ? "border-warning/40 bg-warning/5" : ""}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              Stock on hand
-              {low ? <AlertTriangle className="size-4 text-warning" aria-hidden /> : null}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-semibold">
-              {item.stockOnHand}{" "}
-              <span className="text-base font-normal text-muted-foreground">{item.unit}</span>
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Reorder at {item.reorderPoint} {item.unit}
-              {low ? " · below threshold" : ""}
-            </p>
-          </CardContent>
-        </Card>
+      <KpiGrid columns={3}>
+        <KpiCell
+          label={`Stock on hand · ${item.unit}`}
+          value={String(item.stockOnHand)}
+          tone={low ? "warning" : "default"}
+          meta={`Reorder at ${item.reorderPoint} ${item.unit}${low ? " · below threshold" : ""}`}
+        />
+        <KpiCell
+          label="Unit cost"
+          value={formatCents(item.unitCostCents)}
+          meta={`On-hand value ${formatCents(item.stockOnHand * item.unitCostCents)}`}
+        />
+        <KpiCell
+          label="Status"
+          value={item.isActive ? "Active" : "Inactive"}
+          subtle={!item.isActive}
+          meta={item.supplier ? `Supplier · ${item.supplier}` : undefined}
+        />
+      </KpiGrid>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Cost</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{formatCents(item.unitCostCents)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">per {item.unit}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              On-hand value: {formatCents(item.stockOnHand * item.unitCostCents)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {item.isActive ? <Badge>Active</Badge> : <Badge variant="secondary">Inactive</Badge>}
-            {item.supplier ? (
-              <p className="mt-2 text-xs text-muted-foreground">Supplier: {item.supplier}</p>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Movements</CardTitle>
-        </CardHeader>
-        <CardContent className="px-0">
-          {item.movements.length === 0 ? (
-            <p className="px-6 pb-6 text-sm text-muted-foreground">No movements recorded.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead className="hidden sm:table-cell">By</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {item.movements.map((m) => {
-                  const sign =
-                    m.type === "IN"
-                      ? "+"
-                      : m.type === "OUT"
-                      ? "−"
-                      : (m.reason ?? "").startsWith("(decrease)")
+      <section className="flex flex-col gap-3">
+        <PageHead
+          variant="section"
+          crumb="§ 01 / movements"
+          title="Movements"
+        />
+        {item.movements.length === 0 ? (
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            No movements recorded.
+          </p>
+        ) : (
+          <Ledger>
+            <LedgerHead
+              cols={MOVEMENT_COLS}
+              labels={[
+                "Date",
+                "Type",
+                { label: "Qty", align: "right" },
+                "Reason",
+                "By",
+              ]}
+            />
+            {item.movements.map((m) => {
+              const sign =
+                m.type === "IN"
+                  ? "+"
+                  : m.type === "OUT"
+                    ? "−"
+                    : (m.reason ?? "").startsWith("(decrease)")
                       ? "−"
                       : "+";
-                  return (
-                    <TableRow key={m.id}>
-                      <TableCell>{formatDate(m.recordedAt)}</TableCell>
-                      <TableCell className={MOVEMENT_TONE[m.type] ?? ""}>
-                        {MOVEMENT_LABEL[m.type] ?? m.type}
-                      </TableCell>
-                      <TableCell className={`text-right font-medium ${MOVEMENT_TONE[m.type] ?? ""}`}>
-                        {sign}
-                        {m.quantity}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {m.reason ?? "—"}
-                      </TableCell>
-                      <TableCell className="hidden text-muted-foreground sm:table-cell">
-                        {m.recordedBy.name}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              return (
+                <LedgerRow key={m.id} cols={MOVEMENT_COLS}>
+                  <LedgerNum>{formatDate(m.recordedAt)}</LedgerNum>
+                  <span
+                    className={cn(
+                      "font-mono text-[10px] uppercase tracking-wider",
+                      MOVEMENT_TONE[m.type] ?? "",
+                    )}
+                  >
+                    {MOVEMENT_LABEL[m.type] ?? m.type}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-right font-mono text-sm font-semibold tabular-nums",
+                      MOVEMENT_TONE[m.type] ?? "",
+                    )}
+                  >
+                    {sign}
+                    {m.quantity}
+                  </span>
+                  <LedgerMeta>{m.reason ?? "—"}</LedgerMeta>
+                  <LedgerMeta>{m.recordedBy.name}</LedgerMeta>
+                </LedgerRow>
+              );
+            })}
+          </Ledger>
+        )}
+      </section>
 
       {item.notes ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{item.notes}</p>
-          </CardContent>
-        </Card>
+        <section className="flex flex-col gap-3">
+          <PageHead variant="section" crumb="§ 02 / notes" title="Notes" />
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            {item.notes}
+          </p>
+        </section>
       ) : null}
+
+      <Plate
+        left={`Item · ${item.name}`}
+        right={`${item.stockOnHand} ${item.unit} on hand${low ? " · low" : ""}`}
+      />
     </div>
   );
 }
@@ -224,4 +225,11 @@ function formatDate(d: Date): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(d);
+}
+
+function slug(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }

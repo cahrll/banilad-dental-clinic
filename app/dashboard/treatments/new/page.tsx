@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { buildConditionMap } from "@/lib/teeth";
@@ -33,12 +33,13 @@ export default async function NewTreatmentPage({
   if (!patientId) {
     return (
       <div className="space-y-6">
-        <Button asChild variant="ghost" size="sm" className="w-fit">
+        <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
           <Link href="/dashboard/treatments">
             <ChevronLeft aria-hidden /> Back to treatments
           </Link>
         </Button>
-        <PageHeader
+        <PageHead
+          crumb="/ treatments / new"
           title="Record treatment"
           description="Pick a patient to record a procedure for."
         />
@@ -66,12 +67,12 @@ export default async function NewTreatmentPage({
   if (!patient || patient.deletedAt) {
     return (
       <div className="space-y-6">
-        <Button asChild variant="ghost" size="sm" className="w-fit">
+        <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
           <Link href="/dashboard/treatments">
             <ChevronLeft aria-hidden /> Back to treatments
           </Link>
         </Button>
-        <PageHeader title="Record treatment" />
+        <PageHead crumb="/ treatments / new" title="Record treatment" />
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Patient not found.
@@ -97,13 +98,14 @@ export default async function NewTreatmentPage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href={`/dashboard/patients/${patient.id}`}>
           <ChevronLeft aria-hidden /> Back to {fullName}
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb={`/ treatments / ${patient.firstName.toLowerCase()} / new`}
         title="Record treatment"
         description={`For ${fullName}`}
       />

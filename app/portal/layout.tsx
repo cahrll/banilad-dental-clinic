@@ -9,9 +9,6 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
@@ -41,26 +38,26 @@ export default async function PortalLayout({
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <Sidebar collapsible="icon">
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" asChild>
-                <Link href="/portal">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <span className="text-sm font-semibold">B</span>
-                  </div>
-                  <div className="grid flex-1 text-left leading-tight">
-                    <span className="truncate text-sm font-semibold">
-                      Banilad Dental
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      Patient portal
-                    </span>
-                  </div>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+        <SidebarHeader className="h-12 flex-row items-center border-b border-sidebar-border p-0 px-2">
+          <Link
+            href="/portal"
+            className="flex items-center gap-2.5 rounded-[2px] outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          >
+            <span
+              aria-hidden
+              className="grid size-7 shrink-0 place-items-center rounded-[2px] bg-primary font-mono text-[13px] font-semibold leading-none text-primary-foreground"
+            >
+              B
+            </span>
+            <span className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
+              <span className="font-mono text-[13px] font-semibold uppercase tracking-[0.06em]">
+                BANILAD
+                <span className="ml-1 font-normal text-muted-foreground">
+                  / portal
+                </span>
+              </span>
+            </span>
+          </Link>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -69,7 +66,7 @@ export default async function PortalLayout({
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter>
+        <SidebarFooter className="border-t border-sidebar-border">
           <SidebarUserMenu
             name={user.name}
             email={user.email}
@@ -80,10 +77,12 @@ export default async function PortalLayout({
       </Sidebar>
 
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
-            <span className="text-sm font-medium md:hidden">Patient portal</span>
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground md:hidden">
+              Banilad <span className="text-foreground/30">/</span> portal
+            </span>
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">

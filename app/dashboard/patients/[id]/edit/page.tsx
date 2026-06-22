@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { PatientForm, type PatientFormDefaults } from "../../patient-form";
@@ -73,12 +73,12 @@ export default async function EditPatientPage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href={`/dashboard/patients/${patient.id}`}>
           <ChevronLeft aria-hidden /> Back to patient
         </Link>
       </Button>
-      <PageHeader title={`Edit ${patient.firstName} ${patient.lastName}`} />
+      <PageHead crumb={`/ patients / ${patient.firstName.toLowerCase()} / edit`} title={`Edit ${patient.firstName} ${patient.lastName}`} />
       <Card>
         <CardContent className="pt-6">
           <PatientForm mode="edit" patientId={patient.id} defaults={defaults} />

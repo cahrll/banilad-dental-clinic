@@ -63,30 +63,42 @@ export function TreatmentFilters({
           placeholder="Search by procedure…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="pl-8"
+          className="h-9 rounded-[2px] pl-8 font-mono text-[12px]"
           data-pending={isPending || undefined}
         />
       </div>
       <Select value={dentistId} onValueChange={setDentistId}>
-        <SelectTrigger className="w-full sm:w-56">
+        <SelectTrigger
+          size="sm"
+          className="h-9 w-full rounded-[2px] font-mono text-[11px] uppercase tracking-wider sm:w-56"
+        >
           <SelectValue placeholder="All dentists" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="ALL">All dentists</SelectItem>
+        <SelectContent className="rounded-[2px]">
+          <SelectItem value="ALL" className="font-mono text-[12px]">
+            All dentists
+          </SelectItem>
           {dentists.map((d) => (
-            <SelectItem key={d.id} value={d.id}>
+            <SelectItem key={d.id} value={d.id} className="text-[13px]">
               {d.name}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
       <Select value={range} onValueChange={setRange}>
-        <SelectTrigger className="w-full sm:w-44">
+        <SelectTrigger
+          size="sm"
+          className="h-9 w-full rounded-[2px] font-mono text-[11px] uppercase tracking-wider sm:w-44"
+        >
           <SelectValue />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="rounded-[2px]">
           {RANGE_OPTIONS.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
+            <SelectItem
+              key={o.value}
+              value={o.value}
+              className="font-mono text-[12px]"
+            >
               {o.label}
             </SelectItem>
           ))}

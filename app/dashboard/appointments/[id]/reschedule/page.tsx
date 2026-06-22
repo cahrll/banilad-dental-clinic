@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
@@ -42,12 +42,12 @@ export default async function RescheduleAppointmentPage({
   if (!appointment) {
     return (
       <div className="space-y-6">
-        <Button asChild variant="ghost" size="sm" className="w-fit">
+        <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
           <Link href="/dashboard/appointments">
             <ChevronLeft aria-hidden /> Back to appointments
           </Link>
         </Button>
-        <PageHeader title="Reschedule appointment" />
+        <PageHead crumb="/ appointments / reschedule" title="Reschedule appointment" />
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Appointment not found.
@@ -63,12 +63,12 @@ export default async function RescheduleAppointmentPage({
   if (appointment.status === "COMPLETED" || appointment.status === "CANCELLED") {
     return (
       <div className="space-y-6">
-        <Button asChild variant="ghost" size="sm" className="w-fit">
+        <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
           <Link href="/dashboard/appointments">
             <ChevronLeft aria-hidden /> Back to appointments
           </Link>
         </Button>
-        <PageHeader title="Reschedule appointment" description={`For ${patientName}`} />
+        <PageHead crumb="/ appointments / reschedule" title="Reschedule appointment" description={`For ${patientName}`} />
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             {appointment.status === "COMPLETED"
@@ -82,13 +82,14 @@ export default async function RescheduleAppointmentPage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href="/dashboard/appointments">
           <ChevronLeft aria-hidden /> Back to appointments
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb="/ appointments / reschedule"
         title="Reschedule appointment"
         description={`For ${patientName} · currently ${formatDateTime(appointment.startsAt)}`}
       />

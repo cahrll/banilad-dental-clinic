@@ -210,7 +210,7 @@ export function BookingPicker({
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto_1fr]">
-      <div className="rounded-lg border bg-card">
+      <div className="rounded-md border bg-card">
         <Calendar
           mode="single"
           selected={selectedDate}
@@ -306,11 +306,12 @@ function SlotPills({
             aria-label={ariaLabel}
             className={cn(
               "h-auto w-full flex-col items-center gap-0.5 py-2 tabular-nums",
+              mode === "patient" && "min-h-11",
               !isSelected && "border-border",
             )}
             onClick={() => onSelect(slot)}
           >
-            <span>{formatTime(slot.startsAt)}</span>
+            <span className="font-mono">{formatTime(slot.startsAt)}</span>
             {showDentist && dentistName ? (
               <span
                 className={cn(
@@ -367,7 +368,7 @@ function SlotEmpty({
   body?: string;
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-lg border border-dashed p-6 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-dashed p-6 text-center">
       <div className="text-muted-foreground">{icon}</div>
       <p className="text-sm font-medium">{title}</p>
       {body ? <p className="text-xs text-muted-foreground">{body}</p> : null}
@@ -377,7 +378,7 @@ function SlotEmpty({
 
 function SlotError({ message }: { message: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-destructive/40 bg-destructive/5 p-6 text-center">
       <p className="text-sm text-destructive">{message}</p>
       <p className="text-xs text-muted-foreground">
         Try again, or close and reopen this dialog.

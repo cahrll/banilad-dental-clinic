@@ -1,16 +1,17 @@
 import Link from "next/link";
-import { Plus, Stethoscope } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PageHeader } from "@/components/app/page-header";
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerNum,
+  LedgerName,
+  LedgerMeta,
+  LedgerAmt,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatCents } from "@/lib/money";
@@ -27,9 +28,18 @@ const RANGE_DAYS: Record<string, number | null> = {
   all: null,
 };
 
+const RANGE_LABEL: Record<string, string> = {
+  "30": "last 30 days",
+  "90": "last 90 days",
+  "365": "last 12 months",
+  all: "all time",
+};
+
 function isRangeKey(v: string | undefined): v is keyof typeof RANGE_DAYS {
   return v === "30" || v === "90" || v === "365" || v === "all";
 }
+
+const COLS = "100px minmax(0,1.4fr) minmax(0,1.2fr) minmax(0,1fr) 110px";
 
 export default async function TreatmentsListPage({
   searchParams,
@@ -88,14 +98,19 @@ export default async function TreatmentsListPage({
   const totalCents = treatments.reduce((acc, t) => acc + t.feeCents, 0);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-8">
+      <PageHead
+        crumb={`/ treatments / ${RANGE_LABEL[rangeKey]}${query ? ` / "${query}"` : ""}`}
         title="Treatments"
-        description={`${treatments.length}${treatments.length === 100 ? "+" : ""} record${treatments.length === 1 ? "" : "s"}${treatments.length > 0 ? ` · ${formatCents(totalCents)}` : ""}.`}
+        description={`${treatments.length}${treatments.length === 100 ? "+" : ""} record${treatments.length === 1 ? "" : "s"}${treatments.length > 0 ? ` · ${formatCents(totalCents)}` : ""}`}
         actions={
-          <Button asChild size="sm">
+          <Button
+            asChild
+            size="sm"
+            className="font-mono text-[11px] uppercase tracking-wider"
+          >
             <Link href="/dashboard/treatments/new">
-              <Plus aria-hidden /> Record treatment
+              <Plus aria-hidden /> Record
             </Link>
           </Button>
         }
@@ -109,65 +124,53 @@ export default async function TreatmentsListPage({
       />
 
       {treatments.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-              <Stethoscope className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm font-medium">No treatments found.</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              {query || dentistFilter || rangeKey !== "90"
-                ? "Try clearing filters or widening the date range."
-                : "Click Record treatment to log one."}
-            </p>
-            <Button asChild variant="outline" size="sm" className="mt-2">
-              <Link href="/dashboard/treatments/new">Record treatment</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          {query || dentistFilter || rangeKey !== "90"
+            ? "No treatments match these filters."
+            : "No treatments recorded yet. Use Record to log one."}
+        </p>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Procedure</TableHead>
-                <TableHead className="hidden md:table-cell">Teeth</TableHead>
-                <TableHead className="hidden sm:table-cell">Dentist</TableHead>
-                <TableHead className="text-right">Fee</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {treatments.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell className="whitespace-nowrap">
-                    {formatDate(t.performedAt)}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/dashboard/patients/${t.patient.id}`}
-                      className="font-medium underline-offset-4 hover:underline"
-                    >
-                      {t.patient.lastName}, {t.patient.firstName}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{t.procedure}</TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground">
-                    {formatTeeth(t.toothEntries.map((e) => e.toothNumber))}
-                  </TableCell>
-                  <TableCell className="hidden text-muted-foreground sm:table-cell">
-                    {t.dentist.user.name}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCents(t.feeCents)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        <Ledger>
+          <LedgerHead
+            cols={COLS}
+            labels={[
+              "Date",
+              "Patient",
+              "Procedure",
+              "Teeth · dentist",
+              { label: "Fee", align: "right" },
+            ]}
+          />
+          {treatments.map((t) => {
+            const teeth =
+              t.toothEntries.length === 0
+                ? "—"
+                : formatTeeth(t.toothEntries.map((e) => e.toothNumber));
+            return (
+              <LedgerRow
+                key={t.id}
+                cols={COLS}
+                href={`/dashboard/patients/${t.patient.id}#treatments`}
+              >
+                <LedgerNum>{formatDate(t.performedAt)}</LedgerNum>
+                <LedgerName>
+                  {t.patient.lastName}, {t.patient.firstName}
+                </LedgerName>
+                <LedgerMeta>{t.procedure}</LedgerMeta>
+                <LedgerMeta>
+                  {teeth} · {t.dentist.user.name}
+                </LedgerMeta>
+                <LedgerAmt>{formatCents(t.feeCents)}</LedgerAmt>
+              </LedgerRow>
+            );
+          })}
+        </Ledger>
       )}
+
+      <Plate
+        left={`Treatments · ${RANGE_LABEL[rangeKey]}`}
+        right={`total ${formatCents(totalCents)}`}
+      />
     </div>
   );
 }

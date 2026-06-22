@@ -1,15 +1,27 @@
 import Link from "next/link";
-import { CalendarRange, FileText, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AppointmentStatusBadge } from "@/components/app/status-badge";
+import {
+  KpiGrid,
+  KpiCell,
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerNum,
+  LedgerName,
+  LedgerMeta,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
-import { firstName } from "@/lib/utils";
+import { firstName, cn } from "@/lib/utils";
 import { formatCents } from "@/lib/money";
 import { formatDateTime } from "@/lib/datetime";
+import type { AppointmentStatus } from "@/generated/prisma/client";
 
 export const metadata = { title: "My portal · Banilad Dental Clinic" };
+
+const APPT_COLS = "170px minmax(0,1.4fr) minmax(0,1fr) 100px";
 
 export default async function PortalHome() {
   const { user } = await requirePatient();
@@ -23,15 +35,14 @@ export default async function PortalHome() {
 
   if (!patient || patient.deletedAt) {
     return (
-      <div className="space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Hello, {displayName}.</h1>
-        </header>
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Your patient record isn&apos;t set up yet. Please contact the clinic.
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-6">
+        <PageHead
+          crumb="/ portal"
+          title={`Hello, ${displayName}.`}
+        />
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          Your patient record isn&apos;t set up yet. Please contact the clinic.
+        </p>
       </div>
     );
   }
@@ -73,120 +84,125 @@ export default async function PortalHome() {
   }, 0);
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Hello, {displayName}.</h1>
-        <p className="text-sm text-muted-foreground">
-          Here&apos;s what&apos;s happening with your care.
-        </p>
-      </header>
+    <div className="flex flex-col gap-10">
+      <PageHead
+        crumb="/ portal"
+        title={`Hello, ${displayName}.`}
+        description="Here's what's happening with your care."
+      />
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <SummaryCard
-          Icon={CalendarRange}
+      <KpiGrid columns={3}>
+        <KpiCell
           label="Upcoming visits"
           value={String(upcoming.length)}
+          meta={upcoming.length === 0 ? "nothing booked" : "next on file"}
           href="/portal/appointments"
         />
-        <SummaryCard
-          Icon={FileText}
+        <KpiCell
           label="Treatments on record"
           value={String(recentTreatmentCount)}
+          meta={
+            recentTreatmentCount === 0
+              ? "no history yet"
+              : "performed at the clinic"
+          }
+          href="/portal/treatments"
         />
-        <SummaryCard
-          Icon={Receipt}
+        <KpiCell
           label="Outstanding"
           value={formatCents(outstandingCents)}
+          tone={outstandingCents > 0 ? "warning" : "default"}
           subtle={outstandingCents === 0}
+          meta={
+            outstandingCents > 0
+              ? `${openInvoices.length} open invoice${openInvoices.length === 1 ? "" : "s"}`
+              : "all settled"
+          }
           href="/portal/invoices"
         />
+      </KpiGrid>
+
+      <section className="flex flex-col gap-3">
+        <PageHead
+          variant="section"
+          crumb="§ 01 / upcoming"
+          title="Upcoming appointments"
+          actions={
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="font-mono text-[11px] uppercase tracking-wider"
+            >
+              <Link href="/portal/appointments">View all →</Link>
+            </Button>
+          }
+        />
+        {upcoming.length === 0 ? (
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            You don&apos;t have any upcoming visits.{" "}
+            <Link
+              href="/portal/appointments/new"
+              className="text-foreground underline underline-offset-4"
+            >
+              Book one →
+            </Link>
+          </p>
+        ) : (
+          <Ledger>
+            <LedgerHead
+              cols={APPT_COLS}
+              labels={[
+                "When",
+                "Dentist",
+                "Reason",
+                { label: "Status", align: "right" },
+              ]}
+            />
+            {upcoming.map((a) => (
+              <LedgerRow key={a.id} cols={APPT_COLS}>
+                <LedgerNum>{formatDateTime(a.startsAt)}</LedgerNum>
+                <LedgerName>{a.dentist.user.name}</LedgerName>
+                <LedgerMeta>{a.reason ?? "—"}</LedgerMeta>
+                <AppointmentStatusInk status={a.status} />
+              </LedgerRow>
+            ))}
+          </Ledger>
+        )}
       </section>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Upcoming appointments</CardTitle>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/portal/appointments">View all</Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {upcoming.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              You don&apos;t have any upcoming visits.{" "}
-              <Link
-                href="/portal/appointments"
-                className="underline underline-offset-4"
-              >
-                Book one now
-              </Link>
-              .
-            </p>
-          ) : (
-            <ul className="divide-y">
-              {upcoming.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex flex-wrap items-center justify-between gap-2 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium">
-                      {formatDateTime(a.startsAt)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      With {a.dentist.user.name}
-                      {a.reason ? ` · ${a.reason}` : ""}
-                    </p>
-                  </div>
-                  <AppointmentStatusBadge status={a.status} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      <Plate
+        left="Patient portal · my care"
+        right={`${user.email}`}
+      />
     </div>
   );
 }
 
-function SummaryCard({
-  Icon,
-  label,
-  value,
-  subtle,
-  href,
-}: {
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  label: string;
-  value: string;
-  subtle?: boolean;
-  href?: string;
-}) {
-  const inner = (
-    <Card className={href ? "transition-colors group-hover:border-primary/40" : ""}>
-      <CardContent className="flex items-start gap-3 py-5">
-        <span className="grid size-9 place-items-center rounded-md bg-primary/10 text-primary">
-          <Icon className="size-4" aria-hidden />
-        </span>
-        <div>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {label}
-          </p>
-          <p
-            className={
-              subtle ? "text-2xl font-semibold text-muted-foreground" : "text-2xl font-semibold"
-            }
-          >
-            {value}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-  return href ? (
-    <Link href={href} className="group block">
-      {inner}
-    </Link>
-  ) : (
-    inner
+const STATUS_TONE: Record<AppointmentStatus, string> = {
+  SCHEDULED: "text-warning",
+  CONFIRMED: "text-info",
+  COMPLETED: "text-success",
+  CANCELLED: "text-muted-foreground line-through",
+  NO_SHOW: "text-destructive",
+};
+const STATUS_LABEL: Record<AppointmentStatus, string> = {
+  SCHEDULED: "Scheduled",
+  CONFIRMED: "Confirmed",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  NO_SHOW: "No-show",
+};
+
+function AppointmentStatusInk({ status }: { status: AppointmentStatus }) {
+  return (
+    <span
+      className={cn(
+        "text-right font-mono text-[10px] uppercase tracking-wider",
+        STATUS_TONE[status],
+      )}
+    >
+      {STATUS_LABEL[status]}
+    </span>
   );
 }

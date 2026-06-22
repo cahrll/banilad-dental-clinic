@@ -2,16 +2,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PageHeader } from "@/components/app/page-header";
+  KpiGrid,
+  KpiCell,
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerName,
+  LedgerNum,
+  LedgerAmt,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { InvoiceStatusBadge } from "@/components/app/invoice-status-badge";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
@@ -26,6 +28,9 @@ const PAYMENT_LABELS: Record<string, string> = {
   INSURANCE: "Insurance",
   OTHER: "Other",
 };
+
+const ITEMS_COLS = "56px minmax(0,1.5fr) 120px";
+const PAYMENT_COLS = "130px 130px 120px";
 
 export default async function PatientInvoiceDetailPage({
   params,
@@ -70,129 +75,134 @@ export default async function PatientInvoiceDetailPage({
   const balance = Math.max(0, invoice.totalCents - paid);
 
   return (
-    <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+    <div className="flex flex-col gap-10">
+      <Button
+        asChild
+        variant="ghost"
+        size="sm"
+        className="w-fit font-mono text-[11px] uppercase tracking-wider"
+      >
         <Link href="/portal/invoices">
           <ChevronLeft aria-hidden /> Back to invoices
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb={`/ invoice / ${invoice.number}`}
         title={invoice.number}
-        description={invoice.issuedAt ? `Issued ${formatDate(invoice.issuedAt)}` : undefined}
+        description={
+          invoice.issuedAt ? `Issued ${formatDate(invoice.issuedAt)}` : undefined
+        }
       />
 
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Status strip */}
+      <div
+        data-tabular
+        className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
+      >
         <InvoiceStatusBadge status={invoice.status} />
-        {invoice.dueAt ? (
-          <span className="text-sm text-muted-foreground">Due {formatDate(invoice.dueAt)}</span>
-        ) : null}
+        {invoice.dueAt ? <span>· Due {formatDate(invoice.dueAt)}</span> : null}
+        <span className="ml-auto">{invoice.payments.length} payment{invoice.payments.length === 1 ? "" : "s"} recorded</span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Line items</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoice.items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.description}</TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCents(item.totalCents)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+      {/* Totals */}
+      <KpiGrid columns={3}>
+        <KpiCell label="Subtotal" value={formatCents(invoice.subtotalCents)} />
+        <KpiCell
+          label="Total"
+          value={formatCents(invoice.totalCents)}
+          meta={
+            invoice.discountCents + invoice.taxCents > 0
+              ? `disc ${formatCents(invoice.discountCents)} · tax ${formatCents(invoice.taxCents)}`
+              : "no adjustments"
+          }
+        />
+        <KpiCell
+          label="Balance"
+          value={formatCents(balance)}
+          tone={balance > 0 ? "warning" : "success"}
+          subtle={balance === 0}
+          meta={balance === 0 ? "settled in full" : `${formatCents(paid)} paid`}
+        />
+      </KpiGrid>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <Row label="Subtotal" value={formatCents(invoice.subtotalCents)} />
-            {invoice.discountCents > 0 ? (
-              <Row label="Discount" value={`- ${formatCents(invoice.discountCents)}`} muted />
-            ) : null}
-            {invoice.taxCents > 0 ? (
-              <Row label="Tax" value={`+ ${formatCents(invoice.taxCents)}`} muted />
-            ) : null}
-            <div className="flex items-center justify-between border-t pt-2 text-base font-semibold">
-              <span>Total</span>
-              <span>{formatCents(invoice.totalCents)}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Paid</span>
-              <span>{formatCents(paid)}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Balance</span>
-              <span className={balance > 0 ? "font-semibold text-amber-600 dark:text-amber-400" : "font-medium text-emerald-600 dark:text-emerald-400"}>
-                {formatCents(balance)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Line items */}
+      <section className="flex flex-col gap-3">
+        <PageHead
+          variant="section"
+          crumb="/ line items"
+          title="Line items"
+        />
+        {invoice.items.length === 0 ? (
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            No line items on this invoice.
+          </p>
+        ) : (
+          <Ledger>
+            <LedgerHead
+              cols={ITEMS_COLS}
+              labels={[
+                { label: "Qty", align: "right" },
+                "Description",
+                { label: "Total", align: "right" },
+              ]}
+            />
+            {invoice.items.map((item) => (
+              <LedgerRow key={item.id} cols={ITEMS_COLS}>
+                <span className="text-right font-mono text-sm tabular-nums text-muted-foreground">
+                  {item.quantity}
+                </span>
+                <LedgerName>{item.description}</LedgerName>
+                <LedgerAmt>{formatCents(item.totalCents)}</LedgerAmt>
+              </LedgerRow>
+            ))}
+          </Ledger>
+        )}
+      </section>
 
+      {/* Payments */}
       {invoice.payments.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Payments</CardTitle>
-          </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Paid at</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoice.payments.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell>{formatDate(p.paidAt)}</TableCell>
-                    <TableCell>{PAYMENT_LABELS[p.method] ?? p.method}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCents(p.amountCents)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <section className="flex flex-col gap-3">
+          <PageHead
+            variant="section"
+            crumb="/ payments"
+            title="Payments"
+          />
+          <Ledger>
+            <LedgerHead
+              cols={PAYMENT_COLS}
+              labels={[
+                "Paid at",
+                "Method",
+                { label: "Amount", align: "right" },
+              ]}
+            />
+            {invoice.payments.map((p) => (
+              <LedgerRow key={p.id} cols={PAYMENT_COLS}>
+                <LedgerNum>{formatDate(p.paidAt)}</LedgerNum>
+                <span className="text-sm">
+                  {PAYMENT_LABELS[p.method] ?? p.method}
+                </span>
+                <LedgerAmt>{formatCents(p.amountCents)}</LedgerAmt>
+              </LedgerRow>
+            ))}
+          </Ledger>
+        </section>
       ) : null}
 
       {invoice.notes ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="whitespace-pre-wrap text-sm">{invoice.notes}</p>
-          </CardContent>
-        </Card>
+        <section className="flex flex-col gap-3">
+          <PageHead variant="section" crumb="/ notes" title="Notes" />
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+            {invoice.notes}
+          </p>
+        </section>
       ) : null}
-    </div>
-  );
-}
 
-function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className={muted ? "text-muted-foreground" : ""}>{label}</span>
-      <span className={muted ? "text-muted-foreground" : ""}>{value}</span>
+      <Plate
+        left={`Invoice · ${invoice.number}`}
+        right={`balance ${formatCents(balance)} · ${invoice.status.toLowerCase()}`}
+      />
     </div>
   );
 }

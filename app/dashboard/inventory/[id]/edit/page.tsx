@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { InventoryForm, type InventoryFormDefaults } from "../../inventory-form";
@@ -48,13 +48,13 @@ export default async function EditInventoryItemPage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href={`/dashboard/inventory/${item.id}`}>
           <ChevronLeft aria-hidden /> Back to item
         </Link>
       </Button>
 
-      <PageHeader title={`Edit ${item.name}`} />
+      <PageHead crumb="/ inventory / edit" title={`Edit ${item.name}`} />
 
       <Card>
         <CardContent className="pt-6">

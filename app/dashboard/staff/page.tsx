@@ -1,20 +1,18 @@
 import Link from "next/link";
-import { Plus, UserCog } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PageHeader } from "@/components/app/page-header";
-import { RoleBadge } from "@/components/app/role-badge";
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerName,
+  LedgerMeta,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
+import { cn } from "@/lib/utils";
 import { StaffFilters } from "./staff-filters";
 import type { Role } from "@/generated/prisma/client";
 
@@ -23,6 +21,8 @@ export const metadata = { title: "Staff · Banilad Dental Clinic" };
 type SearchParams = { q?: string; role?: string; inactive?: string };
 
 const ROLE_FILTER_VALUES = ["ADMIN", "DENTIST", "RECEPTIONIST"] as const;
+
+const COLS = "minmax(0,1.6fr) minmax(0,1.4fr) 110px minmax(0,1fr) 90px";
 
 export default async function StaffListPage({
   searchParams,
@@ -66,12 +66,17 @@ export default async function StaffListPage({
   });
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-8">
+      <PageHead
+        crumb={`/ staff${roleFilter ? ` / ${roleFilter.toLowerCase()}` : ""}${query ? ` / "${query}"` : ""}`}
         title="Staff"
-        description={`${staff.length}${staff.length === 200 ? "+" : ""} ${roleFilter ? `${roleFilter.toLowerCase()} ` : ""}account${staff.length === 1 ? "" : "s"}${showInactive ? " (including inactive)" : ""}`}
+        description={`${staff.length}${staff.length === 200 ? "+" : ""} ${roleFilter ? `${roleFilter.toLowerCase()} ` : ""}account${staff.length === 1 ? "" : "s"}${showInactive ? " · including inactive" : ""}`}
         actions={
-          <Button asChild size="sm">
+          <Button
+            asChild
+            size="sm"
+            className="font-mono text-[11px] uppercase tracking-wider"
+          >
             <Link href="/dashboard/staff/new">
               <Plus aria-hidden /> New staff
             </Link>
@@ -86,78 +91,60 @@ export default async function StaffListPage({
       />
 
       {staff.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-2 py-12 text-center">
-            <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-              <UserCog className="size-5" aria-hidden />
-            </span>
-            <p className="text-sm font-medium">No staff found.</p>
-            <p className="max-w-xs text-xs text-muted-foreground">
-              {query || roleFilter
-                ? "Try clearing filters."
-                : "Add your first staff member to get started."}
-            </p>
-            {!query && !roleFilter ? (
-              <Button asChild className="mt-2">
-                <Link href="/dashboard/staff/new">Add staff</Link>
-              </Button>
-            ) : null}
-          </CardContent>
-        </Card>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          {query || roleFilter
+            ? "No matches. Try clearing filters."
+            : "No staff on file yet. Add your first to get started."}
+        </p>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="hidden md:table-cell">Title</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {staff.map((s) => {
-                const title =
-                  s.role === "DENTIST"
-                    ? s.dentist?.specialty ?? "Dentist"
-                    : s.staff?.position ?? "—";
-                return (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/dashboard/staff/${s.id}`}
-                        className="underline-offset-4 hover:underline"
-                      >
-                        {s.name}
-                      </Link>
-                      {s.phone ? (
-                        <p className="text-xs text-muted-foreground">{s.phone}</p>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="hidden text-muted-foreground sm:table-cell">
-                      {s.email}
-                    </TableCell>
-                    <TableCell>
-                      <RoleBadge role={s.role} />
-                    </TableCell>
-                    <TableCell className="hidden text-muted-foreground md:table-cell">
-                      {title}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {s.isActive ? (
-                        <Badge>Active</Badge>
-                      ) : (
-                        <Badge variant="secondary">Inactive</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <Ledger>
+          <LedgerHead
+            cols={COLS}
+            labels={[
+              "Name",
+              "Email",
+              "Role",
+              "Title",
+              { label: "Status", align: "right" },
+            ]}
+          />
+          {staff.map((s) => {
+            const title =
+              s.role === "DENTIST"
+                ? s.dentist?.specialty ?? "Dentist"
+                : s.staff?.position ?? "—";
+            return (
+              <LedgerRow
+                key={s.id}
+                cols={COLS}
+                href={`/dashboard/staff/${s.id}`}
+              >
+                <LedgerName sub={s.phone ? `· ${s.phone}` : undefined}>
+                  {s.name}
+                </LedgerName>
+                <LedgerMeta>{s.email}</LedgerMeta>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {s.role.toLowerCase()}
+                </span>
+                <LedgerMeta>{title}</LedgerMeta>
+                <span
+                  className={cn(
+                    "text-right font-mono text-[10px] uppercase tracking-wider",
+                    s.isActive ? "text-success" : "text-muted-foreground",
+                  )}
+                >
+                  {s.isActive ? "Active" : "Inactive"}
+                </span>
+              </LedgerRow>
+            );
+          })}
+        </Ledger>
       )}
+
+      <Plate
+        left="Staff · access register"
+        right={`${staff.length} account${staff.length === 1 ? "" : "s"} listed`}
+      />
     </div>
   );
 }

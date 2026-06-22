@@ -69,7 +69,7 @@ function Row({
   const leftTeeth = reverse ? [...left].reverse() : left;
   return (
     <div className="flex items-stretch gap-2">
-      <span className="w-12 shrink-0 self-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <span className="w-12 shrink-0 self-center font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
       <div className="grid grid-cols-8 gap-1">
@@ -125,15 +125,17 @@ function ToothButton({
       data-selected={selected || undefined}
       title={status ? `${tooth} · ${TOOTH_STATUS_LABELS[status]}` : `${tooth} · No condition recorded`}
       className={cn(
-        "relative flex flex-col items-center justify-center gap-0.5 rounded-md border px-1.5 py-1.5 text-[11px] font-medium transition-all",
+        "relative flex flex-col items-center justify-center gap-0.5 rounded-sm border px-1.5 py-1.5 transition-colors",
         "min-w-[36px]",
-        !status && "bg-background text-foreground hover:bg-muted border-border",
+        !status && "border-border bg-background text-foreground hover:bg-muted",
+        status && "hover:border-foreground/30",
         mode === "select" && "cursor-pointer",
-        "hover:-translate-y-0.5 hover:shadow-sm",
         "data-[selected=true]:ring-2 data-[selected=true]:ring-primary data-[selected=true]:ring-offset-1",
       )}
     >
-      <span className="leading-none">{tooth}</span>
+      <span className="font-mono text-[11px] font-medium leading-none tabular-nums">
+        {tooth}
+      </span>
       <span
         className="size-1.5 rounded-full"
         style={{ backgroundColor: dotColor }}
@@ -145,7 +147,7 @@ function ToothButton({
 
 function Legend() {
   return (
-    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+    <div className="flex flex-wrap gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
       {Object.entries(TOOTH_STATUS_LABELS).map(([key, label]) => (
         <span key={key} className="inline-flex items-center gap-1.5">
           <span

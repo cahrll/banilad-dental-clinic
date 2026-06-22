@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
+import { PageHead } from "@/components/app/carbon";
 import { requireStaff } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { CreateInvoiceForm } from "./create-invoice-form";
@@ -22,7 +22,7 @@ export default async function NewInvoicePage({
   if (!patientId) {
     return (
       <div className="space-y-6">
-        <PageHeader title="New invoice" />
+        <PageHead crumb="/ billing / new" title="New invoice" />
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Open a patient and click <strong>New invoice</strong> from their Invoices tab.
@@ -40,7 +40,7 @@ export default async function NewInvoicePage({
   if (!patient || patient.deletedAt) {
     return (
       <div className="space-y-6">
-        <PageHeader title="New invoice" />
+        <PageHead crumb="/ billing / new" title="New invoice" />
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Patient not found.
@@ -66,13 +66,14 @@ export default async function NewInvoicePage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm" className="w-fit">
+      <Button asChild variant="ghost" size="sm" className="w-fit font-mono text-[11px] uppercase tracking-wider">
         <Link href={`/dashboard/patients/${patient.id}`}>
           <ChevronLeft aria-hidden /> Back to patient
         </Link>
       </Button>
 
-      <PageHeader
+      <PageHead
+        crumb="/ billing / new"
         title="New invoice"
         description={`For ${patient.firstName} ${patient.lastName}`}
       />

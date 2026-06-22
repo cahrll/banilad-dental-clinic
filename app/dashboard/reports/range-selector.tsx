@@ -24,12 +24,19 @@ export function RangeSelector({ value }: { value: string }) {
         router.replace(next === "90" ? "?" : `?range=${next}`);
       }}
     >
-      <SelectTrigger className="w-44">
+      <SelectTrigger
+        size="sm"
+        className="h-8 w-44 rounded-[2px] font-mono text-[11px] uppercase tracking-wider"
+      >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="rounded-[2px]">
         {OPTIONS.map((o) => (
-          <SelectItem key={o.value} value={o.value}>
+          <SelectItem
+            key={o.value}
+            value={o.value}
+            className="font-mono text-[12px]"
+          >
             {o.label}
           </SelectItem>
         ))}

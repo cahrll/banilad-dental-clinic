@@ -1,15 +1,27 @@
 import Link from "next/link";
-import { CalendarRange, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/app/page-header";
-import { AppointmentStatusBadge } from "@/components/app/status-badge";
+import {
+  Ledger,
+  LedgerHead,
+  LedgerRow,
+  LedgerNum,
+  LedgerName,
+  LedgerMeta,
+  PageHead,
+  Plate,
+} from "@/components/app/carbon";
 import { requirePatient } from "@/lib/auth/guards";
 import { prisma } from "@/lib/db";
 import { formatDateTime } from "@/lib/datetime";
+import { cn } from "@/lib/utils";
+import type { AppointmentStatus } from "@/generated/prisma/client";
 import { CancelButton } from "./cancel-button";
 
 export const metadata = { title: "My appointments · Banilad Dental Clinic" };
+
+const UPCOMING_COLS = "170px minmax(0,1.3fr) minmax(0,1fr) 90px 100px";
+const PAST_COLS = "170px minmax(0,1.3fr) minmax(0,1fr) 100px";
 
 export default async function PatientAppointmentsPage() {
   const { user } = await requirePatient();
@@ -21,13 +33,11 @@ export default async function PatientAppointmentsPage() {
 
   if (!patient || patient.deletedAt) {
     return (
-      <div className="space-y-6">
-        <PageHeader title="My appointments" />
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Your patient record isn&apos;t set up yet. Please contact the clinic.
-          </CardContent>
-        </Card>
+      <div className="flex flex-col gap-6">
+        <PageHead crumb="/ appointments" title="My appointments" />
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          Your patient record isn&apos;t set up yet. Please contact the clinic.
+        </p>
       </div>
     );
   }
@@ -47,82 +57,132 @@ export default async function PatientAppointmentsPage() {
   });
 
   const now = new Date();
-  const upcoming = appointments.filter((a) => a.endsAt >= now && a.status !== "CANCELLED");
-  const past = appointments.filter((a) => !(a.endsAt >= now && a.status !== "CANCELLED"));
+  const upcoming = appointments.filter(
+    (a) => a.endsAt >= now && a.status !== "CANCELLED",
+  );
+  const past = appointments.filter(
+    (a) => !(a.endsAt >= now && a.status !== "CANCELLED"),
+  );
 
   return (
-    <div className="space-y-6">
-      <PageHeader
+    <div className="flex flex-col gap-10">
+      <PageHead
+        crumb="/ appointments"
         title="My appointments"
         description="Book a slot, view upcoming visits, or cancel."
         actions={
-          <Button asChild size="sm">
+          <Button
+            asChild
+            size="sm"
+            className="font-mono text-[11px] uppercase tracking-wider"
+          >
             <Link href="/portal/appointments/new">
-              <Plus aria-hidden /> Book appointment
+              <Plus aria-hidden /> Book
             </Link>
           </Button>
         }
       />
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Upcoming</h2>
+      <section className="flex flex-col gap-3">
+        <PageHead
+          variant="section"
+          crumb="§ 01 / upcoming"
+          title="Upcoming"
+        />
         {upcoming.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
-              <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
-                <CalendarRange className="size-5" aria-hidden />
-              </span>
-              <p className="text-sm font-medium">No upcoming appointments.</p>
-              <p className="max-w-xs text-xs text-muted-foreground">
-                Book a visit with one of our dentists.
-              </p>
-            </CardContent>
-          </Card>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            No upcoming appointments yet.
+          </p>
         ) : (
-          <div className="space-y-2">
+          <Ledger>
+            <LedgerHead
+              cols={UPCOMING_COLS}
+              labels={[
+                "When",
+                "Dentist",
+                "Reason",
+                { label: "Status", align: "right" },
+                { label: "", align: "right" },
+              ]}
+            />
             {upcoming.map((a) => (
-              <Card key={a.id}>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-                  <div className="space-y-1">
-                    <p className="font-medium">{formatDateTime(a.startsAt)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {a.dentist.user.name}
-                      {a.reason ? ` · ${a.reason}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <AppointmentStatusBadge status={a.status} />
-                    {a.status === "SCHEDULED" || a.status === "CONFIRMED" ? (
-                      <CancelButton appointmentId={a.id} />
-                    ) : null}
-                  </div>
-                </CardContent>
-              </Card>
+              <LedgerRow key={a.id} cols={UPCOMING_COLS}>
+                <LedgerNum>{formatDateTime(a.startsAt)}</LedgerNum>
+                <LedgerName>{a.dentist.user.name}</LedgerName>
+                <LedgerMeta>{a.reason ?? "—"}</LedgerMeta>
+                <AppointmentStatusInk status={a.status} />
+                <span className="flex justify-end">
+                  {a.status === "SCHEDULED" || a.status === "CONFIRMED" ? (
+                    <CancelButton appointmentId={a.id} />
+                  ) : null}
+                </span>
+              </LedgerRow>
             ))}
-          </div>
+          </Ledger>
         )}
       </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Past</h2>
+      <section className="flex flex-col gap-3">
+        <PageHead variant="section" crumb="§ 02 / past" title="Past" />
         {past.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No past appointments yet.</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            No past appointments yet.
+          </p>
         ) : (
-          <div className="space-y-2">
+          <Ledger>
+            <LedgerHead
+              cols={PAST_COLS}
+              labels={[
+                "When",
+                "Dentist",
+                "Reason",
+                { label: "Status", align: "right" },
+              ]}
+            />
             {past.map((a) => (
-              <Card key={a.id}>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-                  <div className="space-y-1">
-                    <p className="text-sm">{formatDateTime(a.startsAt)}</p>
-                    <p className="text-xs text-muted-foreground">{a.dentist.user.name}</p>
-                  </div>
-                  <AppointmentStatusBadge status={a.status} />
-                </CardContent>
-              </Card>
+              <LedgerRow key={a.id} cols={PAST_COLS}>
+                <LedgerNum>{formatDateTime(a.startsAt)}</LedgerNum>
+                <LedgerName>{a.dentist.user.name}</LedgerName>
+                <LedgerMeta>{a.reason ?? "—"}</LedgerMeta>
+                <AppointmentStatusInk status={a.status} />
+              </LedgerRow>
             ))}
-          </div>
+          </Ledger>
         )}
       </section>
+
+      <Plate
+        left="Appointments · visit history"
+        right={`${upcoming.length} upcoming · ${past.length} past`}
+      />
     </div>
+  );
+}
+
+const STATUS_TONE: Record<AppointmentStatus, string> = {
+  SCHEDULED: "text-warning",
+  CONFIRMED: "text-info",
+  COMPLETED: "text-success",
+  CANCELLED: "text-muted-foreground line-through",
+  NO_SHOW: "text-destructive",
+};
+const STATUS_LABEL: Record<AppointmentStatus, string> = {
+  SCHEDULED: "Scheduled",
+  CONFIRMED: "Confirmed",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+  NO_SHOW: "No-show",
+};
+
+function AppointmentStatusInk({ status }: { status: AppointmentStatus }) {
+  return (
+    <span
+      className={cn(
+        "text-right font-mono text-[10px] uppercase tracking-wider",
+        STATUS_TONE[status],
+      )}
+    >
+      {STATUS_LABEL[status]}
+    </span>
   );
 }

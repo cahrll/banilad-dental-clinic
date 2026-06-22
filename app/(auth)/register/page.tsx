@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { homePathForRole } from "@/lib/auth/roles";
 import { RegisterForm } from "./register-form";
@@ -12,22 +11,48 @@ export default async function RegisterPage() {
   if (session) redirect(homePathForRole(session.user.role));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">Create your patient account</CardTitle>
-        <CardDescription>
-          Once registered you can book appointments and view your records.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <RegisterForm />
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-            Sign in
-          </Link>
+    <section className="flex flex-col gap-6 border border-border bg-card p-6 sm:p-8">
+      <Link href="/" className="flex items-center gap-2.5 self-start">
+        <span
+          aria-hidden
+          className="grid size-7 place-items-center rounded-[2px] bg-primary font-mono text-[13px] font-semibold leading-none text-primary-foreground"
+        >
+          B
+        </span>
+        <span className="font-mono text-[13px] font-semibold uppercase tracking-[0.06em]">
+          BANILAD
+          <span className="ml-1 font-normal text-muted-foreground">
+            / clinic
+          </span>
+        </span>
+      </Link>
+
+      <div className="flex flex-col gap-1">
+        <p
+          data-tabular
+          className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+        >
+          / register
         </p>
-      </CardContent>
-    </Card>
+        <h1 className="text-[22px] font-semibold tracking-tight">
+          Create your patient account
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Once registered you can book appointments and view your records.
+        </p>
+      </div>
+
+      <RegisterForm />
+
+      <p className="text-center font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+        Already registered?{" "}
+        <Link
+          href="/login"
+          className="text-foreground underline-offset-4 hover:underline"
+        >
+          Sign in
+        </Link>
+      </p>
+    </section>
   );
 }
